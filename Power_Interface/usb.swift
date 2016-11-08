@@ -218,9 +218,9 @@ public class usb_teensy: NSObject
             let stH = NSString(format:"%2X", read_byteArray[1]) as String
             //print(" * \(stH)", terminator: "")
             
-            var resultat:UInt16 = UInt16(read_byteArray[1])
+            var resultat:UInt32 = UInt32(read_byteArray[1])
             resultat   <<= 8
-            resultat    += UInt16(read_byteArray[0])
+            resultat    += UInt32(read_byteArray[0])
             print(" Wert von 0,1: \(resultat) ")
             
             print("")
