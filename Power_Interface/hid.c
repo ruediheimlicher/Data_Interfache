@@ -78,9 +78,17 @@ int rawhid_recv(int num, void *buf, int len, int timeout)
    {
 		if (len > b->len) len = b->len;
 		memcpy(buf, b->buf, len);
+      
 		hid->first_buffer = b->next;
 		free(b);
-     // fprintf(stderr,"rawhid_recv A len: %d\n\n",len);
+      /*
+      fprintf(stderr,"rawhid_recv  len: %d \n",len);
+      for (int i=0;i<len;i++)
+      {
+         fprintf(stderr,"i: %d\t %us\n",i,(char)buf);
+      }
+      fprintf(stderr,"\n");
+       */
 		return len;
 	}
 	memset(&context, 0, sizeof(context));
@@ -230,7 +238,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    reportData = malloc (64);
    
 
-   fprintf(stderr,"rawhid_send num: %d  len: %d\n",num,len);
+   fprintf(stderr,"rawhid_send num: %d  len: %d data: \t%d\n",num,len,(int)&buf[1]);
 	hid_t *hid;
 	int result=-100;
    
@@ -242,11 +250,11 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    uint8_t report[64] = {0x0};
    
    //http://opensource.apple.com/tarballs/IOUSBFamily/
-   IOReturn ret = IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput, 0, reportData, len);
-
-  // IOReturn rettestB = IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput, 0, report, len);
-
-	//IOReturn ret = IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput, 0, buf, len);
+   
+   // exp mit reportData
+   //IOReturn ret = IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput, 0, reportData, len);
+   
+	IOReturn ret = IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput, 0, buf, len);
    
    
 	result = (ret == kIOReturnSuccess) ? len : -1;
@@ -265,9 +273,12 @@ int rawhid_send(int num, void *buf, int len, int timeout)
 	// should already be scheduled with run loop by attach_callback,
 	// sadly this doesn't make any difference either way
 	//
-	IOHIDDeviceSetReportWithCallback(hid->ref, kIOHIDReportTypeOutput,
+//	IOHIDDeviceSetReportWithCallback(hid->ref, kIOHIDReportTypeOutput,
                                     0, buf, len, (double)timeout / 1000.0, output_callback, &result);
-   //fprintf(stderr,"rawhid_send D\n");
+
+   IOHIDDeviceSetReport(hid->ref, kIOHIDReportTypeOutput,
+                                    0, buf, len);
+fprintf(stderr,"rawhid_send D\n");
 	while (1) 
    {
 		fprintf(stderr,"enter run loop (send)\n");
@@ -281,8 +292,8 @@ int rawhid_send(int num, void *buf, int len, int timeout)
 		}
 	}
 #endif
-   //fprintf(stderr,"rawhid_send result: %d\n",result);
-   free (reportData);
+   fprintf(stderr,"rawhid_send function result: %d\n",result);
+   free ((void*)reportData);
 	return result;
 }
 
@@ -458,8 +469,10 @@ static void timeout_callback(CFRunLoopTimerRef timer, void *info)
 void output_callback(void *context, IOReturn ret, void *sender,
                      IOHIDReportType type, uint32_t id, uint8_t *data, CFIndex len)
 {
-	//fprintf(stderr,"output_callback, r=%d\n", ret);
-	if (ret == kIOReturnSuccess) 
+	fprintf(stderr,"output_callback, r=%d\n", ret);
+   fprintf(stderr,"output_callback data: %d\t%d\t%d\t%d\n",data[0],data[1],data[2],data[3]);
+
+	if (ret == kIOReturnSuccess)
    {
 		*(int *)context = len;
 	} else {
@@ -475,17 +488,33 @@ static void input_callback(void *context, IOReturn ret, void *sender,
    buffer_t *n;
    hid_t *hid;
    
-   //fprintf(stderr,"input_callback\n");
-   if (ret != kIOReturnSuccess || len < 1) return;
+//   fprintf(stderr,"input_callback ret: %d\n",ret);
+   if (ret != kIOReturnSuccess || len < 1)
+   {
+      fprintf(stderr,"input_callback err\n");
+      return;
+   }
    hid = context;
    if (!hid || hid->ref != sender) return;
    n = (buffer_t *)malloc(sizeof(buffer_t));
    if (!n) return;
    if (len > BUFFER_SIZE) len = BUFFER_SIZE;
    memcpy(n->buf, data, len);
+   
+   /*
+   fprintf(stderr,"input_callback data:\t");
+   for (int i=0;i<len;i++)
+   {
+      fprintf(stderr,"\t%.2X",data[i]);
+
+   }
+   fprintf(stderr,"\n");
+*/
+ //  fprintf(stderr,"input_callback data: %.2X\t%.2X\t%.2X\t%.2X\t%.2X\n",data[0],data[1],data[2],data[3]);
    n->len = len;
    n->next = NULL;
-   if (!hid->first_buffer || !hid->last_buffer) {
+   if (!hid->first_buffer || !hid->last_buffer)
+   {
       hid->first_buffer = hid->last_buffer = n;
    } else {
       hid->last_buffer->next = n;
@@ -499,7 +528,7 @@ static void detach_callback(void *context, IOReturn r, void *hid_mgr, IOHIDDevic
 {
 	hid_t *p;
    
-	//fprintf(stderr,"detach callback\n");
+	fprintf(stderr,"detach callback\n");
    hid_usbstatus=0;
 	for (p = first_hid; p; p = p->next) {
 		if (p->ref == dev) 
@@ -517,7 +546,7 @@ static void attach_callback(void *context, IOReturn r, void *hid_mgr, IOHIDDevic
 {
    struct hid_struct *h;
    
-	//fprintf(stderr,"attach callback\n");
+	fprintf(stderr,"attach callback\n");
    //
 	if (IOHIDDeviceOpen(dev, kIOHIDOptionsTypeNone) != kIOReturnSuccess) return;
 	h = (hid_t *)malloc(sizeof(hid_t));

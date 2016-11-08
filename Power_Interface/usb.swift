@@ -150,51 +150,53 @@ public class usb_teensy: NSObject
    
    public func cont_read_USB(timer: NSTimer)
    {
+      //print("*cont_read_USB")
       if (read_OK)
-   {
-      
+      {
+         
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
          var result = rawhid_recv(0, &read_byteArray, 32, 50)
+         
          //println("*cont_read_USB result: \(result)")
          //println("tempbyteArray in Timer: *\(read_byteArray)*")
          // var timerdic: [String: Int]
-      
-      /*
-         if  var dic = timer.userInfo as? NSMutableDictionary
-         {
-            if var count:Int = timer.userInfo?["count"] as? Int
-         {
-               count = count + 1
-               dic["count"] = count
-               //dic["nr"] = count+2
-               //println(dic)
-               usb_count += 1
-            }
-         }
-        */
-   //      let timerdic:Dictionary<String,Int!> = timer.userInfo as Dictionary<String,Int!>
+         
+         /*
+          if  var dic = timer.userInfo as? NSMutableDictionary
+          {
+          if var count:Int = timer.userInfo?["count"] as? Int
+          {
+          count = count + 1
+          dic["count"] = count
+          //dic["nr"] = count+2
+          //println(dic)
+          usb_count += 1
+          }
+          }
+          */
+         //      let timerdic:Dictionary<String,Int!> = timer.userInfo as Dictionary<String,Int!>
          //let messageString = userInfo["message"]
-  //       var tempcount = timerdic["count"]!
+         //       var tempcount = timerdic["count"]!
          
          //timer.userInfo["count"] = tempcount + 1
          
-      //print("+++ new read_byteArray in Timer:")
-      /*
-      for  i in 0...12
-      {
-         print(" \(read_byteArray[i])")
-      }
-      println()
-      for  i in 0...12
-      {
-         print(" \(last_read_byteArray[i])")
-      }
-      println()
-      println()
-      */
-      
-      
-      
+         //print("+++ new read_byteArray in Timer:")
+         /*
+          for  i in 0...12
+          {
+          print(" \(read_byteArray[i])")
+          }
+          println()
+          for  i in 0...12
+          {
+          print(" \(last_read_byteArray[i])")
+          }
+          println()
+          println()
+          */
+         
+         
+         
          //timerdic["count"] = 2
          
          // var count:Int = timerdic["count"]
@@ -205,20 +207,21 @@ public class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             
-            print("+++ new read_byteArray in Timer:", terminator: "")
+            print("+ new read_byteArray in Timer:", terminator: "")
             for  i in 0...16
             {
                print(" \(read_byteArray[i])", terminator: "")
             }
-            let stL = NSString(format:"%2X", read_byteArray[6]) as String
-            print(" * \(stL)", terminator: "")
-            let stH = NSString(format:"%2X", read_byteArray[7]) as String
-            print(" * \(stH)", terminator: "")
+            print("")
+            let stL = NSString(format:"%2X", read_byteArray[0]) as String
+            //print(" * \(stL)", terminator: "")
+            let stH = NSString(format:"%2X", read_byteArray[1]) as String
+            //print(" * \(stH)", terminator: "")
             
-            var resultat:UInt16 = UInt16(read_byteArray[7])
+            var resultat:UInt16 = UInt16(read_byteArray[1])
             resultat   <<= 8
-             resultat    += UInt16(read_byteArray[6])
-            print(" * \(resultat) ", terminator: "")
+            resultat    += UInt16(read_byteArray[0])
+            print(" Wert von 0,1: \(resultat) ")
             
             print("")
             //var st = NSString(format:"%2X", n) as String
@@ -227,10 +230,10 @@ public class usb_teensy: NSObject
          
          //let theStringToPrint = timer.userInfo as String
          //println(theStringToPrint)
-   }
+      }
       else
       {
-            timer.invalidate()
+         timer.invalidate()
       }
    }
 
@@ -246,6 +249,8 @@ public class usb_teensy: NSObject
       write_byteArray[2] = testArray[2]
       write_byteArray[3] = usb_count
       usb_count += 1
+      
+      //data0.intValue = write_byteArray[0]
       if testArray[0] < 0x80
       {
          testArray[0] += 1
@@ -278,11 +283,11 @@ public class usb_teensy: NSObject
       
       for  i in 0...16
       {
-         print(" \(write_byteArray[i])")
+         print(" \(write_byteArray[i])", terminator: "")
       }
+      print("")
       
-      
-      let senderfolg = rawhid_send(0,&write_byteArray, 32, 50)
+      let senderfolg = rawhid_send(0,&write_byteArray, 32, 500)
       
       print("\tsenderfolg: \(senderfolg)", terminator: "")
       print("")

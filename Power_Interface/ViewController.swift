@@ -192,6 +192,7 @@ class ViewController: NSViewController
       //spannungsanzeige.numberOfTickMarks = 16
       extspannungFeld.doubleValue = 5.0
       extspannungStepper.doubleValue = 5.0
+      input.string = "input-data"
    }
    
    
@@ -318,100 +319,39 @@ class ViewController: NSViewController
          //NSBeep()
          if (teensy.new_Data)
          {
-            NSBeep()
-            let a1: UInt8 = teensy.last_read_byteArray[6]
-            let a2: UInt8 = teensy.last_read_byteArray[7]
+            // NSBeep()
+            let a1: UInt8 = teensy.last_read_byteArray[0]
+            let a2: UInt8 = teensy.last_read_byteArray[1]
             
-  //          var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
+            //var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
+            //print("data: \(data)")
             
-  //          print("\(data)")
-            
-           // let inputstring = teensy.last_read_byteArray as NSArray
+            // let inputstring = teensy.last_read_byteArray as NSArray
             
             let b1: Int32 = Int32(a1)
             let b2: Int32 = Int32(a2)
-            //H_Feld.intValue = b2
-            H_Feld.stringValue = NSString(format:"%2X", a2) as String
-           // H_Feld.stringValue = NSString(format:"%d", a2)
             
-            //L_Feld.intValue = b1
-           L_Feld.stringValue = NSString(format:"%2X", a1) as String
-           // L_Feld.stringValue = NSString(format:"%d", a1)
+            print("a1: \(a1) \tb1: \(b1)\ta2: \(a2)\tb2: \(b2)\n");
+            H_Feld.intValue = b2
+            H_Feld.stringValue = NSString(format:"%2X", a2) as String
+            
+            // H_Feld.stringValue = NSString(format:"%d", a2)
+            
+            L_Feld.intValue = b1
+            L_Feld.stringValue = NSString(format:"%2X", a1) as String
+            // L_Feld.stringValue = NSString(format:"%d", a1)
             
             let rotA:Int32 = (b1 | (b2<<8))
             //inputFeld.stringValue = NSString(format:"%2X", rotA)
             inputFeld.intValue = Int32(rotA)
             
-            
             spannungsanzeige.intValue = Int32(rotA )
             
             teensy.new_Data = false
-         }
-         
-         
-         
-         
-         //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
-         /*
-         print("teensy read_byteArray: ")
-         for  i in 0...16
-         {
-            print("| \(teensy.last_read_byteArray[i])")
-         }
-         println("|")
-         */
-         //println(teensy.read_byteArray)
-
-         //println("tempbyteArray in Timer: *\(tempbyteArray)*")
-         // var timerdic: [String: Int]
-        
-         /*
-         if  var dic = timer.userInfo as? NSMutableDictionary
-         {
-            if var count:Int = timer.userInfo?["count"] as? Int
-            {
-               count = count + 1
-               dic["count"] = count
-               //dic["nr"] = count+2
-               //println(dic)
-            }
-         }
-        */
-         
-         //let timerdic:Dictionary<String,Int!> = timer.userInfo as Dictionary<String,Int!>
-         //let messageString = userInfo["message"]
-         //var tempcount = timerdic["count"]!
-         
-         //timer.userInfo["count"] = tempcount + 1
-         
-         
-         
-         
-         
-         //timerdic["count"] = 2
-         
-         // var count:Int = timerdic["count"]
-         
-         //timer.userInfo["count"] = count+1
-         /*
-         if !(teensy.last_read_byteArray == read_byteArray)
-         {
-            read_byteArray = last_read_byteArray
-            
-            print("+++ new read_byteArray in Timer:")
-            for  i in 0...4
-            {
-               print(" \(read_byteArray[i])")
-            }
-            println()
             
             
          }
-         */
-         //println("*read_USB in Timer result: \(result)")
          
-         //let theStringToPrint = timer.userInfo as String
-         //println(theStringToPrint)
       }
       else
       {
