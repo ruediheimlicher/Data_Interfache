@@ -238,7 +238,7 @@ public class usb_teensy: NSObject
    }
 
    
-   public func send_USB()->Int32
+   public func report_start_write_USB()->Int32
    {
       // http://www.swiftsoda.com/swift-coding/get-bytes-from-nsdata/
       // Test Array to generate some Test Data
@@ -248,7 +248,14 @@ public class usb_teensy: NSObject
       write_byteArray[1] = testArray[1]
       write_byteArray[2] = testArray[2]
       write_byteArray[3] = usb_count
+      if (usb_count < 0xFF)
+      {
       usb_count += 1
+      }
+      else
+      {
+         usb_count = 0
+      }
       
       //data0.intValue = write_byteArray[0]
       if testArray[0] < 0x80
@@ -279,7 +286,7 @@ public class usb_teensy: NSObject
 
       
       //println("write_byteArray: \(write_byteArray)")
-      print("new write_byteArray in send_USB: ", terminator: "")
+      print("new write_byteArray in report_start_write_USB: ", terminator: "")
       
       for  i in 0...16
       {
