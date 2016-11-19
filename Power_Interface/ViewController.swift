@@ -8,19 +8,22 @@
 
 import Cocoa
 import AVFoundation
+import Darwin
 
 let DSLO = 8
 let DSHI = 9
 let SERVOALO = 10
 let SERVOAHI = 11
 
+let MMCLO = 16
+let MMCHI = 17
 
-class ViewController: NSViewController 
+class ViewController: NSViewController
 {
    
    // var  myUSBController:USBController
    // var usbzugang:
-   var usbstatus: Int32 = 0
+   var usbstatus: __uint8_t = 0
    
    var usb_read_cont = false; // kontinuierlich lesen
    var usb_write_cont = false; // kontinuierlich schreiben
@@ -42,10 +45,12 @@ class ViewController: NSViewController
    
    @IBOutlet weak var start_read_USB_Knopf: NSButton!
    @IBOutlet weak var stop_read_USB_Knopf: NSButton!
-   
+   @IBOutlet weak var cont_read_check: NSButton!
+
    @IBOutlet weak var start_write_USB_Knopf: NSButton!
    @IBOutlet weak var stop_write_USB_Knopf: NSButton!
-   
+   @IBOutlet weak var cont_write_check: NSButton!
+
    
    @IBOutlet weak var codeFeld: NSTextField!
    
@@ -72,7 +77,6 @@ class ViewController: NSViewController
    @IBOutlet weak var extstrom: NSTextField!
    @IBOutlet weak var Teensy_Status: NSButton!
    
-   @IBOutlet weak var cont_write_check: NSButton!
    
    @IBOutlet weak var extspannungStepper: NSStepper!
    
@@ -83,6 +87,19 @@ class ViewController: NSViewController
    @IBOutlet weak var ServoASlider: NSSlider!
 
    
+   // USB-code
+   @IBOutlet weak var bit0_check: NSButton!
+   @IBOutlet weak var bit1_check: NSButton!
+   @IBOutlet weak var bit2_check: NSButton!
+   @IBOutlet weak var bit3_check: NSButton!
+   @IBOutlet weak var bit4_check: NSButton!
+   @IBOutlet weak var bit5_check: NSButton!
+   @IBOutlet weak var bit6_check: NSButton!
+   @IBOutlet weak var bit7_check: NSButton!
+   // mmc
+    @IBOutlet weak var mmcLOFeld: NSTextField!
+    @IBOutlet weak var mmcHIFeld: NSTextField!
+    @IBOutlet weak var mmcDataFeld: NSTextField!
    
    
    @IBAction func report_cont_write(sender: AnyObject)
@@ -97,6 +114,23 @@ class ViewController: NSViewController
       }
       //println("report_cont_write usb_write_cont: \(usb_write_cont)")
    }
+   
+   
+   @IBAction func report_cont_read(sender: AnyObject)
+   {
+      if (sender.state == 0)
+      {
+         usb_read_cont = false
+      }
+      else
+      {
+         usb_read_cont = true
+      }
+      //println("report_cont_read usb_read_cont: \(usb_read_cont)")
+   }
+   
+  
+   
    @IBAction func controlDidChange(sender: AnyObject)
    {
       print("controlDidChange: \(sender.doubleValue)")
@@ -104,6 +138,36 @@ class ViewController: NSViewController
       self.setSpannung()
    }
    
+    @IBAction func reportBit0(sender: AnyObject)
+    {
+      print("reportBit0 tag: \(sender.tag)")
+      let bit:UInt8 = UInt8(sender.tag)
+      if (sender.state == 1)
+      {
+         usbstatus |= (1<<bit)
+      }
+      else
+      {
+         usbstatus &= ~(1<<bit)
+      }
+      codeFeld.intValue = Int32(usbstatus)
+   }
+   
+   @IBAction func reportWriteCodeBit(sender: AnyObject)
+   {
+      print("reportBit1 tag: \(sender.tag)")
+      let bit:UInt8 = UInt8(sender.tag)
+      if (sender.state == 1)
+      {
+         usbstatus |= (1<<bit)
+      }
+      else
+      {
+         usbstatus &= ~(1<<bit)
+      }
+      codeFeld.intValue = Int32(usbstatus)
+   }
+
    @IBAction func sendServoA(sender: AnyObject)
    {
       
@@ -226,7 +290,18 @@ class ViewController: NSViewController
       super.viewDidLoad()
       
       NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ViewController.USBfertigAktion(_:)), name: "NSWindowWillCloseNotification", object: nil)
+      var deg=0.0;
+      while deg<50
+      {
+         let winkel = M_PI * 2.0 * deg / 360.0
+         let sinus1 = sin(M_PI * 2.0 * deg / 240.0)
+         let sinus2 = sin((M_PI * 2.0 * deg / 180.0 ) * 13)
+         let sinus3 = sin((M_PI * 2.0 * deg / 120.0 ) * 5)
 
+         deg = deg + 2
+         let sinus = sinus1 + sinus2 * 0.5 + sinus3 * 0.7 + 1.0
+         print("\(winkel)\t\(sinus1)\t\(sinus2)\t\(sinus3)\t\(sinus)")
+      }
       let xy = Hello()
      // USB_OK.backgroundColor = NSColor.yellowColor()
       USB_OK.textColor = NSColor.yellowColor()
@@ -319,7 +394,6 @@ class ViewController: NSViewController
         // teensy.write_byteArray[0] |= UInt8(Teensy_Status.intValue)
         // teensy.write_byteArray[1] = UInt8(data0.intValue)
          
-         
          var senderfolg = teensy.report_start_write_USB()
 
       }
@@ -342,18 +416,23 @@ class ViewController: NSViewController
       print("start_read_USB")
       //myUSBController.startRead(1)
       teensy.start_read_USB()
-      usb_read_cont = true // cont_Read wird aktiviert
+      
+      usb_read_cont = (cont_read_check.state == 1) // cont_Read wird bei aktiviertem check eingeschaltet
+      
       
       //teensy.start_teensy_Timer()
       
       //     var somethingToPass = "It worked"
       
       //      let timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: Selector("tester:"), userInfo: somethingToPass, repeats: true)
+      
+      if (usb_read_cont == true)
+      {
       var timer : NSTimer? = nil
       
       // Auslesen der Ergebnisse in teensy
       timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.cont_read_USB(_:)), userInfo: nil, repeats: true)
-
+      }
    }
    
    func cont_read_USB(timer: NSTimer)
@@ -394,21 +473,31 @@ class ViewController: NSViewController
             
             
             
-            var DSLOW:Int32 = Int32(teensy.last_read_byteArray[DSLO])
-            var DSHIGH:Int32 = Int32(teensy.last_read_byteArray[DSHI])
+            let DSLOW:Int32 = Int32(teensy.last_read_byteArray[DSLO])
+            let DSHIGH:Int32 = Int32(teensy.last_read_byteArray[DSHI])
             
-            var temperatur = DSLOW | (DSHIGH<<8)
+            if (DSLOW > 0)
+            {
+               let temperatur = DSLOW | (DSHIGH<<8)
             
-               print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
-            DSLO_Feld.intValue = DSLOW
-            DSHI_Feld.intValue = DSHIGH
-            let  temperaturfloat:Float = Float(temperatur)/10.0
-             var formatter = NSNumberFormatter()
+               //print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
+               DSLO_Feld.intValue = DSLOW
+               DSHI_Feld.intValue = DSHIGH
+               let  temperaturfloat:Float = Float(temperatur)/10.0
+               _ = NSNumberFormatter()
             
-            let t:NSString = NSString(format:"%.01f", temperaturfloat) as String
-            print("temperaturfloat: \(temperaturfloat) String: \(t)");
-            DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
+               let t:NSString = NSString(format:"%.01f", temperaturfloat) as String
+               print("temperaturfloat: \(temperaturfloat) String: \(t)");
+               DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
             //DSTempFeld.floatValue = temperaturfloat
+            }
+            // mmc
+            let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
+            let mmcHI:Int32 = Int32(teensy.last_read_byteArray[MMCHI])
+            let mmcData  = mmcLO | (mmcHI >> 8)
+            mmcLOFeld.intValue = mmcLO
+            mmcHIFeld.intValue = mmcHI
+            mmcDataFeld.intValue = mmcData
             teensy.new_Data = false
             
             
@@ -425,7 +514,7 @@ class ViewController: NSViewController
    
    @IBAction func check_USB(sender: NSButton)
    {
-      let erfolg = teensy.USBOpen()
+      let erfolg = UInt8(teensy.USBOpen())
       usbstatus = erfolg
       print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
       
@@ -463,7 +552,7 @@ class ViewController: NSViewController
    {
       teensy.read_OK = false
       usb_read_cont = false
-      
+      cont_read_check.state = 0;
       
    }
    
@@ -479,15 +568,12 @@ class ViewController: NSViewController
    @IBAction func report_start_write_USB(sender: AnyObject)
    {
       //NSBeep()
-      teensy.write_byteArray[0] |= UInt8(Teensy_Status.intValue)
+      print("report_start_write_USB code: \(codeFeld.intValue)")
+      teensy.write_byteArray[0] = UInt8(codeFeld.intValue)
       teensy.write_byteArray[1] = UInt8(data0.intValue)
-      
-      //var c0 = codeFeld.intValue + 1
-      var c0:UInt8 = UInt8(Teensy_Status.intValue)
-      c0 <<= 7
-      codeFeld.intValue = Int32(c0)
-      var c1 = data0.intValue + 1
-      //data0.intValue = c0
+      teensy.write_byteArray[2] = UInt8(data1.intValue)
+      teensy.write_byteArray[3] = UInt8(data2.intValue)
+      teensy.write_byteArray[4] = UInt8(data3.intValue)
       
       
       
@@ -552,10 +638,11 @@ class ViewController: NSViewController
       */
       }
       */
-      
+      if (usb_write_cont)
+      {
       var timer : NSTimer? = nil
       timer = NSTimer.scheduledTimerWithTimeInterval(2.0, target: self, selector: #selector(ViewController.cont_write_USB(_:)), userInfo: nil, repeats: true)
-
+      }
    }
    
  func cont_write_USB(timer: NSTimer)

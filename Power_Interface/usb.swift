@@ -139,10 +139,10 @@ public class usb_teensy: NSObject
       print("*report_start_read_USB result: \(result)")
       //println("read_byteArray nach: *\(read_byteArray)*")
    
-      var somethingToPass = "It worked in teensy_send_USB"
+     // var somethingToPass = "It worked in teensy_send_USB"
       
       var timer : NSTimer? = nil
-      timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: Selector("cont_read_USB:"), userInfo: timerDic, repeats: true)
+      timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
       
       return timerDic as NSDictionary
    }
@@ -153,7 +153,6 @@ public class usb_teensy: NSObject
       //print("*cont_read_USB")
       if (read_OK)
       {
-         
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
          var result = rawhid_recv(0, &read_byteArray, 32, 50)
          
@@ -207,12 +206,12 @@ public class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             
-            print("+ new read_byteArray in Timer:", terminator: "")
-            for  i in 0...16
+           // print("+ new read_byteArray in Timer:", terminator: "")
+            for  i in 0...24
             {
-               print(" \(read_byteArray[i])", terminator: "")
+              // print(" \(read_byteArray[i])", terminator: "")
             }
-            print("")
+            //print("")
             let stL = NSString(format:"%2X", read_byteArray[0]) as String
             //print(" * \(stL)", terminator: "")
             let stH = NSString(format:"%2X", read_byteArray[1]) as String
@@ -243,11 +242,14 @@ public class usb_teensy: NSObject
       // http://www.swiftsoda.com/swift-coding/get-bytes-from-nsdata/
       // Test Array to generate some Test Data
       //  var testData = NSData(bytes: testArray,length: testArray.count)
-      
+     
+      /*
       write_byteArray[0] = testArray[0]
       write_byteArray[1] = testArray[1]
       write_byteArray[2] = testArray[2]
       write_byteArray[3] = usb_count
+ */
+      write_byteArray[4] = usb_count
       if (usb_count < 0xFF)
       {
       usb_count += 1
