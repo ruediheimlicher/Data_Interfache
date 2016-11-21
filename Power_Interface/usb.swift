@@ -19,18 +19,18 @@ var						spistatus=0;
 let TIMER0_STARTWERT			=		0x80
 let SPI_BUFSIZE		=					48
 
-public class usb_teensy: NSObject
+open class usb_teensy: NSObject
 {
    var hid_usbstatus: Int32 = 0
    var usb_count: UInt8 = 0
    
-   var read_byteArray = [UInt8](count: 32, repeatedValue: 0x00)
-   var last_read_byteArray = [UInt8](count: 32, repeatedValue: 0x00)
+   var read_byteArray = [UInt8](repeating: 0x00, count: 32)
+   var last_read_byteArray = [UInt8](repeating: 0x00, count: 32)
   /*
    char*      sendbuffer;
    sendbuffer=malloc(USB_DATENBREITE);
 */
-   var write_byteArray: Array<UInt8> = Array(count: 32, repeatedValue: 0x00)
+   var write_byteArray: Array<UInt8> = Array(repeating: 0x00, count: 32)
   
   
    
@@ -49,7 +49,7 @@ public class usb_teensy: NSObject
       super.init()
    }
    
-   public func USBOpen()->Int32
+   open func USBOpen()->Int32
    {
       var r:Int32 = 0
       
@@ -66,7 +66,7 @@ public class usb_teensy: NSObject
       else
       {
          NSLog("USBOpen: found rawhid device hid_usbstatus: %d",hid_usbstatus)
-         
+         /*
          let manu   = get_manu()
          let manustr = UnsafePointer<CUnsignedChar>(manu)
          if (manustr == nil)
@@ -75,12 +75,25 @@ public class usb_teensy: NSObject
          }
          else
          {
-            manustring = String.fromCString(UnsafePointer<CChar>(manustr))!
+            manustring = String(cString: UnsafePointer<CChar>(manustr!))
          }
+         */
+         // https://codedump.io/share/77b7p4vSpwaJ/1/converting-from-const-char-to-swift-string
+         let manu   = get_manu()
+         let l = strlen(manu)
+         print ("manu l: \(l) \(manu)")
+         if (strlen(manu) > 1)
+         {
+            let manustr:String = String(cString: manu!)
+         }
+         else
+         {
+            manustring = "-"
+         }
+
+
          
-         
-         
-         
+         /*
          let prod = get_prod();
          //fprintf(stderr,"prod: %s\n",prod);
          let prodstr = UnsafePointer<CUnsignedChar>(prod)
@@ -90,23 +103,34 @@ public class usb_teensy: NSObject
          }
          else
          {
-            prodstring = String.fromCString(UnsafePointer<CChar>(prod))!
+            prodstring = String(cString: UnsafePointer<CChar>(prod!))
          }
          
          var USBDatenDic = ["prod": prod, "manu":manu]
-         
+        */
       }
       
-      
+         let prod = get_prod();
+         //fprintf(stderr,"prod: %s\n",prod);
+         let prodstr = String(cString: prod!)
+         if (prodstr == nil)
+         {
+            prodstring = "-"
+         }
+         else
+         {
+            prodstring = String(cString: UnsafePointer<CChar>(prod!))
+         }
+
       return out;
    } // end USBOpen
    
-   public func manufactorer()->String?
+   open func manufactorer()->String?
    {
       return manustring
    }
 
-   public func producer()->String?
+   open func producer()->String?
    {
       return prodstring
    }
@@ -115,20 +139,12 @@ public class usb_teensy: NSObject
 
    
    
-   public func status()->Int32
+   open func status()->Int32
    {
       return hid_usbstatus
    }
    
-   func appendCRLFAndConvertToUTF8_1(s: String) -> NSData {
-      let crlfString: NSString = s.stringByAppendingString("\r\n")
-      let buffer = crlfString.UTF8String
-      let bufferLength = crlfString.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
-      let data = NSData(bytes: buffer, length: bufferLength)
-      return data;
-   }
-   
-   public func start_read_USB()-> NSDictionary
+   open func start_read_USB()-> NSDictionary
    {
       read_OK = true
       let timerDic:NSMutableDictionary  = ["count": 0]
@@ -141,17 +157,17 @@ public class usb_teensy: NSObject
    
      // var somethingToPass = "It worked in teensy_send_USB"
       
-      var timer : NSTimer? = nil
-      timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
+      var timer : Timer? = nil
+      timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
       
       return timerDic as NSDictionary
    }
    
    
-   public func cont_read_USB(timer: NSTimer)
+   open func cont_read_USB(_ timer: Timer)
    {
       //print("*cont_read_USB")
-      if (read_OK)
+      if (read_OK).boolValue
       {
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
          var result = rawhid_recv(0, &read_byteArray, 32, 50)
@@ -237,7 +253,7 @@ public class usb_teensy: NSObject
    }
 
    
-   public func report_start_write_USB()->Int32
+   open func report_start_write_USB()->Int32
    {
       // http://www.swiftsoda.com/swift-coding/get-bytes-from-nsdata/
       // Test Array to generate some Test Data
@@ -318,7 +334,7 @@ public class usb_teensy: NSObject
    //public func read_byteArray()->
 
    
-   public func rep_read_USB(inTimer: NSTimer)
+   open func rep_read_USB(_ inTimer: Timer)
    {
          
          
@@ -329,9 +345,9 @@ public class usb_teensy: NSObject
 }
 
 
-public class Hello
+open class Hello
 {
-   public func setU()
+   open func setU()
    {
    print("Hi Netzteil")
    }

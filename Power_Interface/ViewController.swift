@@ -102,7 +102,7 @@ class ViewController: NSViewController
     @IBOutlet weak var mmcDataFeld: NSTextField!
    
    
-   @IBAction func report_cont_write(sender: AnyObject)
+   @IBAction func report_cont_write(_ sender: AnyObject)
    {
       if (sender.state == 0)
       {
@@ -116,7 +116,7 @@ class ViewController: NSViewController
    }
    
    
-   @IBAction func report_cont_read(sender: AnyObject)
+   @IBAction func report_cont_read(_ sender: AnyObject)
    {
       if (sender.state == 0)
       {
@@ -131,14 +131,14 @@ class ViewController: NSViewController
    
   
    
-   @IBAction func controlDidChange(sender: AnyObject)
+   @IBAction func controlDidChange(_ sender: AnyObject)
    {
       print("controlDidChange: \(sender.doubleValue)")
       self.update_extspannung(sender.doubleValue)
       self.setSpannung()
    }
    
-    @IBAction func reportBit0(sender: AnyObject)
+    @IBAction func reportBit0(_ sender: AnyObject)
     {
       print("reportBit0 tag: \(sender.tag)")
       let bit:UInt8 = UInt8(sender.tag)
@@ -153,7 +153,7 @@ class ViewController: NSViewController
       codeFeld.intValue = Int32(usbstatus)
    }
    
-   @IBAction func reportWriteCodeBit(sender: AnyObject)
+   @IBAction func reportWriteCodeBit(_ sender: AnyObject)
    {
       print("reportBit1 tag: \(sender.tag)")
       let bit:UInt8 = UInt8(sender.tag)
@@ -168,10 +168,10 @@ class ViewController: NSViewController
       codeFeld.intValue = Int32(usbstatus)
    }
 
-   @IBAction func sendServoA(sender: AnyObject)
+   @IBAction func sendServoA(_ sender: AnyObject)
    {
       
-      var formatter = NSNumberFormatter()
+      var formatter = NumberFormatter()
       var tempspannung:Double  = extspannungFeld.doubleValue * 100
       if (tempspannung > 3000)
       {
@@ -180,7 +180,7 @@ class ViewController: NSViewController
          
       }
       
-      var tempPos = ServoASlider.intValue
+      let tempPos = ServoASlider.intValue
       
       //      extspannungFeld.doubleValue = ((tempspannung/100)+1)%12
       //var tempintspannung = UInt16(tempspannung)
@@ -200,10 +200,10 @@ class ViewController: NSViewController
 
    
    
-   @IBAction func sendSpannung(sender: AnyObject)
+   @IBAction func sendSpannung(_ sender: AnyObject)
    {
  
-      var formatter = NSNumberFormatter()
+      var formatter = NumberFormatter()
       var tempspannung:Double  = extspannungFeld.doubleValue * 100
       if (tempspannung > 3000)
       {
@@ -212,7 +212,7 @@ class ViewController: NSViewController
         
       }
 //      extspannungFeld.doubleValue = ((tempspannung/100)+1)%12
-      var tempintspannung = UInt16(tempspannung)
+      let tempintspannung = UInt16(tempspannung)
       //NSString(format:"%2X", a2)
       spL.stringValue = NSString(format:"%02X", (tempintspannung & 0x00FF)) as String
       spH.stringValue = NSString(format:"%02X", ((tempintspannung & 0xFF00)>>8)) as String
@@ -229,10 +229,10 @@ class ViewController: NSViewController
  
    func setSpannung()
    {
-      var beepSound = NSURL(fileURLWithPath: NSBundle.mainBundle().pathForResource("beep", ofType: "aif")!)
+      var beepSound = URL(fileURLWithPath: Bundle.main.path(forResource: "beep", ofType: "aif")!)
       
       
-      var formatter = NSNumberFormatter()
+      var formatter = NumberFormatter()
       var tempspannung:Double  = extspannungFeld.doubleValue * 100
       if (tempspannung > 3000)
       {
@@ -241,7 +241,7 @@ class ViewController: NSViewController
          
       }
       //      extspannungFeld.doubleValue = ((tempspannung/100)+1)%12
-      var tempintspannung = UInt16(tempspannung)
+      let tempintspannung = UInt16(tempspannung)
       //NSString(format:"%2X", a2)
       spL.stringValue = NSString(format:"%02X", (tempintspannung & 0x00FF)) as String
       spH.stringValue = NSString(format:"%02X", ((tempintspannung & 0xFF00)>>8)) as String
@@ -258,18 +258,18 @@ class ViewController: NSViewController
 
    
    
-   @IBAction func sendStrom(sender: AnyObject)
+   @IBAction func sendStrom(_ sender: AnyObject)
    {
-      var formatter = NSNumberFormatter()
+      var formatter = NumberFormatter()
       var tempstrom:Double  = extstrom.doubleValue * 100
       if (tempstrom > 3000)
       {
          tempstrom = 3000
          
       }
-      var ired = NSString(format:"%2.2f", tempstrom/100)
+      let ired = NSString(format:"%2.2f", tempstrom/100)
       extstrom.stringValue = ired as String
-      var tempintstrom = UInt16(tempstrom)
+      let tempintstrom = UInt16(tempstrom)
       //NSString(format:"%2X", a2)
       spL.stringValue = NSString(format:"%02X", (tempintstrom & 0x00FF)) as String
       spH.stringValue = NSString(format:"%02X", ((tempintstrom & 0xFF00)>>8)) as String
@@ -289,7 +289,7 @@ class ViewController: NSViewController
    {
       super.viewDidLoad()
       
-      NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ViewController.USBfertigAktion(_:)), name: "NSWindowWillCloseNotification", object: nil)
+      NotificationCenter.default.addObserver(self, selector: #selector(ViewController.USBfertigAktion(_:)), name: NSNotification.Name(rawValue: "NSWindowWillCloseNotification"), object: nil)
       var deg=0.0;
       while deg<50
       {
@@ -304,7 +304,7 @@ class ViewController: NSViewController
       }
       let xy = Hello()
      // USB_OK.backgroundColor = NSColor.yellowColor()
-      USB_OK.textColor = NSColor.yellowColor()
+      USB_OK.textColor = NSColor.yellow
        USB_OK.stringValue = "?";
       // Do any additional setup after loading the view.
       
@@ -315,7 +315,7 @@ class ViewController: NSViewController
    }
    
    
-   func USBfertigAktion(sender: AnyObject)-> Bool
+   func USBfertigAktion(_ sender: AnyObject)-> Bool
    {
       NSLog("USBfertigAktion will schliessen")
       
@@ -333,15 +333,15 @@ class ViewController: NSViewController
    }
    
    
-   @IBAction func startU_Funktion(sender: NSButton)
+   @IBAction func startU_Funktion(_ sender: NSButton)
    {
       let timerDic:NSMutableDictionary = ["delta": 1.0]
-      var timer : NSTimer? = nil
-      timer = NSTimer.scheduledTimerWithTimeInterval(8.0, target: self, selector: Selector("cont_U_Funktion:"), userInfo: timerDic, repeats: true)
+      var timer : Timer? = nil
+      timer = Timer.scheduledTimer(timeInterval: 8.0, target: self, selector: #selector(ViewController.cont_U_Funktion(_:)), userInfo: timerDic, repeats: true)
 
    }
 
-   func cont_U_Funktion(timer: NSTimer)
+   func cont_U_Funktion(_ timer: Timer)
    {
       
       var aktspannung:Double  = extspannungFeld.doubleValue
@@ -377,14 +377,14 @@ class ViewController: NSViewController
    }
    
    
-   func tester(timer: NSTimer)
+   func tester(_ timer: Timer)
    {
       let theStringToPrint = timer.userInfo as! String
       print(theStringToPrint)
    }
    
    
-   @IBAction func Teensy_setState(sender: NSButton)
+   @IBAction func Teensy_setState(_ sender: NSButton)
    {
       if (sender.state > 0)
       {
@@ -411,7 +411,7 @@ class ViewController: NSViewController
       }
    }
    
-   @IBAction func start_read_USB(sender: AnyObject)
+   @IBAction func start_read_USB(_ sender: AnyObject)
    {
       print("start_read_USB")
       //myUSBController.startRead(1)
@@ -428,19 +428,19 @@ class ViewController: NSViewController
       
       if (usb_read_cont == true)
       {
-      var timer : NSTimer? = nil
+      var timer : Timer? = nil
       
       // Auslesen der Ergebnisse in teensy
-      timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.cont_read_USB(_:)), userInfo: nil, repeats: true)
+      timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(ViewController.cont_read_USB(_:)), userInfo: nil, repeats: true)
       }
    }
    
-   func cont_read_USB(timer: NSTimer)
+   func cont_read_USB(_ timer: Timer)
    {
       if (usb_read_cont)
       {
          //NSBeep()
-         if (teensy.new_Data)
+         if (teensy.new_Data).boolValue
          {
             // NSBeep()
             let a0: UInt8 = teensy.last_read_byteArray[0]
@@ -484,9 +484,9 @@ class ViewController: NSViewController
                DSLO_Feld.intValue = DSLOW
                DSHI_Feld.intValue = DSHIGH
                let  temperaturfloat:Float = Float(temperatur)/10.0
-               _ = NSNumberFormatter()
+               _ = NumberFormatter()
             
-               let t:NSString = NSString(format:"%.01f", temperaturfloat) as String
+               let t:NSString = NSString(format:"%.01f", temperaturfloat) as String as String as NSString
                print("temperaturfloat: \(temperaturfloat) String: \(t)");
                DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
             //DSTempFeld.floatValue = temperaturfloat
@@ -512,7 +512,7 @@ class ViewController: NSViewController
 
    
    
-   @IBAction func check_USB(sender: NSButton)
+   @IBAction func check_USB(_ sender: NSButton)
    {
       let erfolg = UInt8(teensy.USBOpen())
       usbstatus = erfolg
@@ -522,33 +522,33 @@ class ViewController: NSViewController
       {
         // NSBeep()
          print("status 1")
-         USB_OK.textColor = NSColor.greenColor()
+         USB_OK.textColor = NSColor.green
          USB_OK.stringValue = "OK";
          manufactorer.stringValue = "Manufactorer: " + teensy.manufactorer()!
          
-         Teensy_Status.enabled = true;
-         start_read_USB_Knopf.enabled = true;
-         stop_read_USB_Knopf.enabled = true;
-         start_write_USB_Knopf.enabled = true;
-         stop_write_USB_Knopf.enabled = true;
+         Teensy_Status.isEnabled = true;
+         start_read_USB_Knopf.isEnabled = true;
+         stop_read_USB_Knopf.isEnabled = true;
+         start_write_USB_Knopf.isEnabled = true;
+         stop_write_USB_Knopf.isEnabled = true;
       }
       else
          
       {
          print("status 0")
-         USB_OK.textColor = NSColor.redColor()
+         USB_OK.textColor = NSColor.red
         USB_OK.stringValue = "X";
-         Teensy_Status.enabled = false;
-         start_read_USB_Knopf.enabled = false;
-         stop_read_USB_Knopf.enabled = false;
-         start_write_USB_Knopf.enabled = false;
-         stop_write_USB_Knopf.enabled = false;
+         Teensy_Status.isEnabled = false;
+         start_read_USB_Knopf.isEnabled = false;
+         stop_read_USB_Knopf.isEnabled = false;
+         start_write_USB_Knopf.isEnabled = false;
+         stop_write_USB_Knopf.isEnabled = false;
 
       }
       print("antwort: \(teensy.status())")
    }
    
-   @IBAction func stop_read_USB(sender: AnyObject)
+   @IBAction func stop_read_USB(_ sender: AnyObject)
    {
       teensy.read_OK = false
       usb_read_cont = false
@@ -557,7 +557,7 @@ class ViewController: NSViewController
    }
    
    
-   @IBAction func stop_write_USB(sender: AnyObject)
+   @IBAction func stop_write_USB(_ sender: AnyObject)
    {
       usb_write_cont = false
       cont_write_check.state = 0;
@@ -565,7 +565,7 @@ class ViewController: NSViewController
    
    
    
-   @IBAction func report_start_write_USB(sender: AnyObject)
+   @IBAction func report_start_write_USB(_ sender: AnyObject)
    {
       //NSBeep()
       print("report_start_write_USB code: \(codeFeld.intValue)")
@@ -640,12 +640,12 @@ class ViewController: NSViewController
       */
       if (usb_write_cont)
       {
-      var timer : NSTimer? = nil
-      timer = NSTimer.scheduledTimerWithTimeInterval(2.0, target: self, selector: #selector(ViewController.cont_write_USB(_:)), userInfo: nil, repeats: true)
+      var timer : Timer? = nil
+      timer = Timer.scheduledTimer(timeInterval: 2.0, target: self, selector: #selector(ViewController.cont_write_USB(_:)), userInfo: nil, repeats: true)
       }
    }
    
- func cont_write_USB(timer: NSTimer)
+ func cont_write_USB(_ timer: Timer)
  {
     //println("report_cont_write usb_write_cont: \(usb_write_cont)")
    // if (usb_write_cont)
@@ -687,21 +687,21 @@ class ViewController: NSViewController
    }
    
    
-   func update_extspannung ( extspanung_new:Double)
+   func update_extspannung ( _ extspanung_new:Double)
    {
       extspannungFeld.doubleValue = extspanung_new
       extspannungStepper.doubleValue = extspanung_new
    }
    
    
-   override var representedObject: AnyObject? {
+   override var representedObject: Any? {
       didSet {
          // Update the view, if already loaded.
       }
    }
    
-   @IBAction func ExitNow(sender: AnyObject) {
-      NSApplication.sharedApplication().terminate(self)
+   @IBAction func ExitNow(_ sender: AnyObject) {
+      NSApplication.shared().terminate(self)
    }
    
 }

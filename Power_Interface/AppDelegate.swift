@@ -19,22 +19,22 @@ class AppDelegate: NSObject, NSApplicationDelegate , NSWindowDelegate
    
  
    @IBOutlet weak var  Fenster: NSViewController!
-   func applicationDidFinishLaunching(aNotification: NSNotification)
+   func applicationDidFinishLaunching(_ aNotification: Notification)
    {
       // http://stackoverflow.com/questions/26698481/change-userinfo-in-timer-selector-function-in-swift?rq=1
-      var beeppfad = NSBundle.mainBundle()
+      var beeppfad = Bundle.main
       //println("beeppfad: \(beeppfad)")
       
       
       
       
-      var fensterArray  = NSApplication.sharedApplication().windows
+      var fensterArray  = NSApplication.shared().windows
    //   println("topControllers: \(topControllers[0].description)")
-      var f   = NSApplication.sharedApplication().windows.count
-      var hauptfenster = fensterArray[0] as NSWindow
+      var f   = NSApplication.shared().windows.count
+      let hauptfenster = fensterArray[0] as NSWindow
       
-      var a = hauptfenster.opaque
-      var farbe:NSColor = NSColor(red: 200/255, green: 235/255, blue: 210/255, alpha: 1.0)
+      var a = hauptfenster.isOpaque
+      let farbe:NSColor = NSColor(red: 200/255, green: 235/255, blue: 210/255, alpha: 1.0)
       hauptfenster.backgroundColor = farbe
       
       var wc = fensterArray[0].windowController!as NSWindowController
@@ -48,20 +48,20 @@ class AppDelegate: NSObject, NSApplicationDelegate , NSWindowDelegate
    }
    
 
-   func applicationWillTerminate(aNotification: NSNotification)
+   func applicationWillTerminate(_ aNotification: Notification)
    {
       // Insert code here to tear down your application
       
       NSLog("Schluss")
    }
 
-   func windowShouldClose(sender: AnyObject)-> Bool
+   func windowShouldClose(_ sender: Any)-> Bool
    {
      // NSLog("Sollte Schliessen")
       return true
    }
    
-   func fertigAktion(sender: AnyObject)-> Bool
+   func fertigAktion(_ sender: AnyObject)-> Bool
    {
       NSLog("fertigAktion will schliessen")
       //var hauptfenster:NSWindow   = NSApplication.sharedApplication().mainWindow!
@@ -73,7 +73,7 @@ class AppDelegate: NSObject, NSApplicationDelegate , NSWindowDelegate
 
       
       
-      NSApplication.sharedApplication().terminate(self)
+      NSApplication.shared().terminate(self)
       return true
    }
 
