@@ -16,7 +16,7 @@
 #include <IOKit/hid/IOHIDBase.h>
 //#include "hid.h"
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 64
 //#define printf(...) // comment this out to get lots of info printed
 
 static IONotificationPortRef    gNotifyPort;

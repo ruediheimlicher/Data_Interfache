@@ -26,8 +26,8 @@ open class usb_teensy: NSObject
    var hid_usbstatus: Int32 = 0
    var usb_count: UInt8 = 0
    let size = BufferSize()
-   var read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
-   var last_read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
+   var read_byteArray = [UInt8](repeating: 0x00, count: 64)
+   var last_read_byteArray = [UInt8](repeating: 0x00, count: 64)
   /*
    char*      sendbuffer;
    sendbuffer=malloc(USB_DATENBREITE);
@@ -156,7 +156,7 @@ open class usb_teensy: NSObject
       let result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50);
       
       print("*report_start_read_USB result: \(result)")
-      //println("read_byteArray nach: *\(read_byteArray)*")
+      print("read_byteArray start: *\(read_byteArray)*")
    
      // var somethingToPass = "It worked in teensy_send_USB"
       
@@ -226,7 +226,7 @@ open class usb_teensy: NSObject
             new_Data = true
             
            // print("+ new read_byteArray in Timer:", terminator: "")
-            for  i in 0...24
+            for  i in 0...63
             {
               // print(" \(read_byteArray[i])", terminator: "")
             }
@@ -239,9 +239,9 @@ open class usb_teensy: NSObject
             var resultat:UInt32 = UInt32(read_byteArray[1])
             resultat   <<= 8
             resultat    += UInt32(read_byteArray[0])
-            print(" Wert von 0,1: \(resultat) ")
+            //print(" Wert von 0,1: \(resultat) ")
             
-            print("")
+            //print("")
             //var st = NSString(format:"%2X", n) as String
          }
          //println("*read_USB in Timer result: \(result)")
@@ -307,11 +307,17 @@ open class usb_teensy: NSObject
 
       
       //println("write_byteArray: \(write_byteArray)")
+      write_byteArray[62] = 43;
+      write_byteArray[63] = 44;
+
       print("new write_byteArray in report_start_write_USB: ", terminator: "")
+      var i=0;
       
-      for  i in 0...16
+      //for  i in 0...63
+      while i < 64
       {
          print(" \(write_byteArray[i])", terminator: "")
+         i = i+1
       }
       print("")
       

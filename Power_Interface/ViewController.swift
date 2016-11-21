@@ -10,10 +10,21 @@ import Cocoa
 import AVFoundation
 import Darwin
 
+
+// USB Eingang
+// Temperatur
 let DSLO = 8
 let DSHI = 9
+
+// ADC
+let  ADCLO      =      10
+let  ADCHI      =      11
+
+// USB Ausgang
 let SERVOALO = 10
 let SERVOAHI = 11
+
+
 
 let MMCLO = 16
 let MMCHI = 17
@@ -83,7 +94,12 @@ class ViewController: NSViewController
    @IBOutlet weak var DSLO_Feld: NSTextField!
    @IBOutlet weak var DSHI_Feld: NSTextField!
    @IBOutlet weak var DSTempFeld: NSTextField!
-   
+
+   // ADC
+   @IBOutlet weak var ADCLO_Feld: NSTextField!
+   @IBOutlet weak var ADCHI_Feld: NSTextField!
+   @IBOutlet weak var ADCFeld: NSTextField!
+
    @IBOutlet weak var ServoASlider: NSSlider!
 
    
@@ -419,6 +435,39 @@ class ViewController: NSViewController
       
       usb_read_cont = (cont_read_check.state == 1) // cont_Read wird bei aktiviertem check eingeschaltet
       
+      let DSLOW:Int32 = Int32(teensy.read_byteArray[DSLO])
+      let DSHIGH:Int32 = Int32(teensy.read_byteArray[DSHI])
+      
+      if (DSLOW > 0)
+      {
+         let temperatur = DSLOW | (DSHIGH<<8)
+         
+         //print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
+         DSLO_Feld.intValue = DSLOW
+         DSHI_Feld.intValue = DSHIGH
+         let  temperaturfloat:Float = Float(temperatur)/10.0
+         _ = NumberFormatter()
+         
+         let t:NSString = NSString(format:"%.01f", temperaturfloat) as String as String as NSString
+         print("temperaturfloat: \(temperaturfloat) String: \(t)");
+         DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
+         //DSTempFeld.floatValue = temperaturfloat
+      }
+
+      
+      let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
+      let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
+      ADCLO_Feld.intValue = ADC0LO
+      ADCHI_Feld.intValue = ADC0HI
+      
+      let adc0 = ADC0LO | (ADC0HI<<8)
+      let  adcfloat:Float = Float(adc0)/0xFFFF*5.0
+      _ = NumberFormatter()
+
+      print("adcfloat: \(adcfloat) String: \(adcfloat)");
+      ADCFeld.stringValue = NSString(format:"%.02f", adcfloat) as String
+      
+      print ("adc0: \(adc0)");
       
       //teensy.start_teensy_Timer()
       
@@ -491,6 +540,24 @@ class ViewController: NSViewController
                DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
             //DSTempFeld.floatValue = temperaturfloat
             }
+            
+            
+            let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
+            let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
+            
+            let adc0 = ADC0LO | (ADC0HI<<8)
+            print ("adc0: \(adc0)");
+            ADCLO_Feld.intValue = ADC0LO
+            ADCHI_Feld.intValue = ADC0HI
+            
+            let  adcfloat:Float = Float(adc0)/0x400*5.0
+            _ = NumberFormatter()
+            
+            print("adcfloat: \(adcfloat) String: \(adcfloat)");
+            ADCFeld.stringValue = NSString(format:"%.02f", adcfloat) as String
+            
+            print ("adc0: \(adc0)");
+
             // mmc
             let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
             let mmcHI:Int32 = Int32(teensy.last_read_byteArray[MMCHI])
