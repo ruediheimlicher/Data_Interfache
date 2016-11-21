@@ -17,7 +17,6 @@
 //#include "hid.h"
 
 #define BUFFER_SIZE 32
-
 //#define printf(...) // comment this out to get lots of info printed
 
 static IONotificationPortRef    gNotifyPort;
@@ -47,8 +46,14 @@ struct buffer_struct {
 	uint8_t buf[BUFFER_SIZE];
 };
 
+const int BufferSize()
+{
+   return BUFFER_SIZE;
+}
+
 int hid_usbstatus=0;
 int rawhid_recv(int num, void *buf, int len, int timeout);
+
 
 // private functions, not intended to be used from outside this file
 

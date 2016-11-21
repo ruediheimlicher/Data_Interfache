@@ -18,20 +18,21 @@ var						spistatus=0;
 //#define SPI_BUFSIZE							48
 let TIMER0_STARTWERT			=		0x80
 let SPI_BUFSIZE		=					48
+let BUFFER_SIZE:Int   = Int(BufferSize())
+
 
 open class usb_teensy: NSObject
 {
    var hid_usbstatus: Int32 = 0
    var usb_count: UInt8 = 0
-   
-   var read_byteArray = [UInt8](repeating: 0x00, count: 32)
-   var last_read_byteArray = [UInt8](repeating: 0x00, count: 32)
+   let size = BufferSize()
+   var read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
+   var last_read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
   /*
    char*      sendbuffer;
    sendbuffer=malloc(USB_DATENBREITE);
 */
-   var write_byteArray: Array<UInt8> = Array(repeating: 0x00, count: 32)
-  
+   var write_byteArray: Array<UInt8> = Array(repeating: 0x00, count: BUFFER_SIZE)
   
    
    // var testArray = [UInt8]()
@@ -67,17 +68,17 @@ open class usb_teensy: NSObject
       {
          NSLog("USBOpen: found rawhid device hid_usbstatus: %d",hid_usbstatus)
          /*
-         let manu   = get_manu()
-         let manustr = UnsafePointer<CUnsignedChar>(manu)
-         if (manustr == nil)
-         {
-            manustring = "-"
-         }
-         else
-         {
-            manustring = String(cString: UnsafePointer<CChar>(manustr!))
-         }
-         */
+          let manu   = get_manu()
+          let manustr = UnsafePointer<CUnsignedChar>(manu)
+          if (manustr == nil)
+          {
+          manustring = "-"
+          }
+          else
+          {
+          manustring = String(cString: UnsafePointer<CChar>(manustr!))
+          }
+          */
          // https://codedump.io/share/77b7p4vSpwaJ/1/converting-from-const-char-to-swift-string
          let manu   = get_manu()
          let l = strlen(manu)
@@ -90,38 +91,40 @@ open class usb_teensy: NSObject
          {
             manustring = "-"
          }
-
-
+         
+         
          
          /*
-         let prod = get_prod();
-         //fprintf(stderr,"prod: %s\n",prod);
-         let prodstr = UnsafePointer<CUnsignedChar>(prod)
-         if (prodstr == nil)
-         {
-            prodstring = "-"
-         }
-         else
-         {
-            prodstring = String(cString: UnsafePointer<CChar>(prod!))
-         }
-         
-         var USBDatenDic = ["prod": prod, "manu":manu]
-        */
-      }
+          let prod = get_prod();
+          //fprintf(stderr,"prod: %s\n",prod);
+          let prodstr = UnsafePointer<CUnsignedChar>(prod)
+          if (prodstr == nil)
+          {
+          prodstring = "-"
+          }
+          else
+          {
+          prodstring = String(cString: UnsafePointer<CChar>(prod!))
+          }
+          
+          var USBDatenDic = ["prod": prod, "manu":manu]
+          */
       
-         let prod = get_prod();
+      
+      let prod = get_prod();
+      if (strlen(prod) > 1)
+      {
          //fprintf(stderr,"prod: %s\n",prod);
          let prodstr = String(cString: prod!)
-         if (prodstr == nil)
-         {
-            prodstring = "-"
-         }
-         else
-         {
-            prodstring = String(cString: UnsafePointer<CChar>(prod!))
-         }
-
+      }
+      else
+      {
+         prodstring = String(cString: UnsafePointer<CChar>(prod!))
+      }
+      
+      var USBDatenDic = ["prod": prod, "manu":manu]
+      
+      }
       return out;
    } // end USBOpen
    
@@ -150,7 +153,7 @@ open class usb_teensy: NSObject
       let timerDic:NSMutableDictionary  = ["count": 0]
       
       
-      let result = rawhid_recv(0, &read_byteArray, 32, 50);
+      let result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50);
       
       print("*report_start_read_USB result: \(result)")
       //println("read_byteArray nach: *\(read_byteArray)*")
@@ -170,7 +173,7 @@ open class usb_teensy: NSObject
       if (read_OK).boolValue
       {
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
-         var result = rawhid_recv(0, &read_byteArray, 32, 50)
+         var result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50)
          
          //println("*cont_read_USB result: \(result)")
          //println("tempbyteArray in Timer: *\(read_byteArray)*")
@@ -312,7 +315,7 @@ open class usb_teensy: NSObject
       }
       print("")
       
-      let senderfolg = rawhid_send(0,&write_byteArray, 32, 500)
+      let senderfolg = rawhid_send(0,&write_byteArray, Int32(BUFFER_SIZE), 500)
       
       print("\tsenderfolg: \(senderfolg)", terminator: "")
       print("")
