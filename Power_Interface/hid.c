@@ -243,7 +243,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    reportData = malloc (64);
    
 
-   fprintf(stderr,"rawhid_send num: %d  len: %d data: \t%d\n",num,len,(int)&buf[1]);
+   //fprintf(stderr,"rawhid_send num: %d  len: %d data: \t%d\n",num,len,(int)&buf[1]);
 	hid_t *hid;
 	int result=-100;
    
@@ -264,7 +264,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    
 	result = (ret == kIOReturnSuccess) ? len : -1;
    
-   fprintf(stderr,"rawhid_send B ret: %d  result: %d\n",ret, result);
+   //fprintf(stderr,"rawhid_send  Success: %d  result: %d\n",ret, result);
 #endif
 #if 0
 	// No matter what I tried this never actually sends an output

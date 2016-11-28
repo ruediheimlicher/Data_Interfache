@@ -52,12 +52,16 @@ class AppDelegate: NSObject, NSApplicationDelegate , NSWindowDelegate
    {
       // Insert code here to tear down your application
       
-      NSLog("Schluss")
+      NSLog("AppDelegate applicationWillTerminate Schluss")
    }
 
+   func NSWindowWillCloseNotification()
+   {
+      NSLog("AppDelegate NSWindowWillCloseNotification Sollte Schliessen")
+   }
    func windowShouldClose(_ sender: Any)-> Bool
    {
-     // NSLog("Sollte Schliessen")
+      NSLog("AppDelegate windowShouldClose Sollte Schliessen")
       return true
    }
    
