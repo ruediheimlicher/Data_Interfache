@@ -26,8 +26,8 @@ open class usb_teensy: NSObject
    var hid_usbstatus: Int32 = 0
    var usb_count: UInt8 = 0
    let size = BufferSize()
-   var read_byteArray = [UInt8](repeating: 0x00, count: 64)
-   var last_read_byteArray = [UInt8](repeating: 0x00, count: 64)
+   var read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
+   var last_read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
   /*
    char*      sendbuffer;
    sendbuffer=malloc(USB_DATENBREITE);
@@ -44,6 +44,10 @@ open class usb_teensy: NSObject
    
    var manustring:String = ""
    var prodstring:String = ""
+   
+   var datatruecounter = 0
+   var datafalsecounter = 0
+   
    
    override init()
    {
@@ -170,7 +174,7 @@ open class usb_teensy: NSObject
       if (xcont == true)
       {
          var timer : Timer? = nil
-         timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
+         timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
       }
       return Int(result) //timerDic as NSDictionary
    }
@@ -234,7 +238,8 @@ open class usb_teensy: NSObject
          {
             last_read_byteArray = read_byteArray
             new_Data = true
-//            print("newData in usb.swift cont_Read")
+            datatruecounter += 1
+            print("\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
  //           print("\(read_byteArray)")
             
             
@@ -245,7 +250,7 @@ open class usb_teensy: NSObject
              userInfo: ["message":"neue Daten", "data":read_byteArray])
             
            // print("+ new read_byteArray in Timer:", terminator: "")
-            for  i in 0...63
+            for  i in 0...31
             {
               // print(" \(read_byteArray[i])", terminator: "")
             }
@@ -255,9 +260,9 @@ open class usb_teensy: NSObject
             let stH = NSString(format:"%2X", read_byteArray[1]) as String
             //print(" * \(stH)", terminator: "")
             
-            var resultat:UInt32 = UInt32(read_byteArray[1])
-            resultat   <<= 8
-            resultat    += UInt32(read_byteArray[0])
+            //var resultat:UInt32 = UInt32(read_byteArray[1])
+            //resultat   <<= 8
+            //resultat    += UInt32(read_byteArray[0])
             //print(" Wert von 0,1: \(resultat) ")
             
             //print("")
@@ -265,7 +270,9 @@ open class usb_teensy: NSObject
          }
          else
          {
-            new_Data = false
+            //new_Data = false
+            datafalsecounter += 1
+            print("--- \(read_byteArray[0])\t\(datafalsecounter)")
          }
          //println("*read_USB in Timer result: \(result)")
          
@@ -337,14 +344,14 @@ open class usb_teensy: NSObject
 */
       
       //println("write_byteArray: \(write_byteArray)")
-      write_byteArray[62] = 43;
-      write_byteArray[63] = 44;
+      write_byteArray[6] = 43;
+      write_byteArray[7] = 44;
 
       print("usb.swift new write_byteArray in start_write_USB: ", terminator: "")
       var i=0;
       
       //for  i in 0...63
-      while i < 64
+      while i < 32
       {
          print(" \(write_byteArray[i])", terminator: "")
          i = i+1
@@ -388,7 +395,7 @@ open class usb_teensy: NSObject
       var i=0;
       
       //for  i in 0...63
-      while i < 64
+      while i < 32
       {
          print(" \(write_byteArray[i])", terminator: "")
          i = i+1

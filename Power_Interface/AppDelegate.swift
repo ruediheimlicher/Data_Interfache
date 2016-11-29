@@ -57,7 +57,7 @@ class AppDelegate: NSObject, NSApplicationDelegate , NSWindowDelegate
 
    func NSWindowWillCloseNotification()
    {
-      NSLog("AppDelegate NSWindowWillCloseNotification Sollte Schliessen")
+      NSLog("AppDelegate NSWindowWillCloseNotification Will Schliessen")
    }
    func windowShouldClose(_ sender: Any)-> Bool
    {

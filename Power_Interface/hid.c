@@ -16,7 +16,7 @@
 #include <IOKit/hid/IOHIDBase.h>
 //#include "hid.h"
 
-#define BUFFER_SIZE 64
+#define BUFFER_SIZE 32
 //#define printf(...) // comment this out to get lots of info printed
 
 static IONotificationPortRef    gNotifyPort;
@@ -240,7 +240,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
 {
    //char* 	*reportData;
    const uint8_t* 	reportData;
-   reportData = malloc (64);
+   reportData = malloc (32);
    
 
    //fprintf(stderr,"rawhid_send num: %d  len: %d data: \t%d\n",num,len,(int)&buf[1]);
@@ -252,7 +252,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    //fprintf(stderr,"rawhid_send A\n");
 #if 1
 #warning "Send timeout not implemented on MACOSX"
-   uint8_t report[64] = {0x0};
+   uint8_t report[32] = {0x0};
    
    //http://opensource.apple.com/tarballs/IOUSBFamily/
    

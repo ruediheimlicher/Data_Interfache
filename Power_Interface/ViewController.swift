@@ -573,7 +573,7 @@ class ViewController: NSViewController, NSWindowDelegate
                
                // gelesene Daten
                var ind = 0
-               for  ind in 8...55
+               for  ind in 8...31
                //while i < 64
                {
                   print("\(ind)\t \(teensy.last_read_byteArray[ind])", terminator: "\n")
@@ -819,12 +819,12 @@ class ViewController: NSViewController, NSWindowDelegate
       var i=0;
       
       //for  i in 0...63
-      while i < 64
+      while i < 32
       {
-         print(" \(teensy.write_byteArray[i])", terminator: "")
+         print("\(i)\t \(teensy.write_byteArray[i])\t", terminator: "")
          i = i+1
       }
-      print("")
+      print("*")
 
       let dateA = Date()
       
@@ -901,7 +901,7 @@ class ViewController: NSViewController, NSWindowDelegate
    
  func cont_write_USB(_ timer: Timer)
  {
-   // print("*** cont_write usb: \(usb_write_cont)")
+    print("*** \tcont_write usb: \(usb_write_cont)")
    // if (usb_write_cont)
     if (cont_write_check.state == 1)
     {
