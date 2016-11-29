@@ -167,7 +167,7 @@ open class usb_teensy: NSObject
       let result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50);
       
       print("*report_start_read_USB result: \(result)")
-      print("read_byteArray start: *\(read_byteArray)*")
+      print("start_read_byteArray start: *\(read_byteArray)*")
       
       // var somethingToPass = "It worked in teensy_send_USB"
       let xcont = true;
@@ -348,11 +348,12 @@ open class usb_teensy: NSObject
       write_byteArray[6] = 43;
       write_byteArray[7] = 44;
 
-      print("usb.swift new write_byteArray in start_write_USB: ", terminator: "")
+      print("\nusb.swift new write_byteArray in start_write_USB code: \(write_byteArray[0])", terminator: "\n")
       var i=0;
       
       //for  i in 0...63
-      while i < 32
+      i = 8
+      while i < BUFFER_SIZE - 1
       {
          print(" \(write_byteArray[i])", terminator: "")
          i = i+1

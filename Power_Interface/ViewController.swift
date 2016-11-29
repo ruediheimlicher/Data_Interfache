@@ -484,7 +484,7 @@ class ViewController: NSViewController, NSWindowDelegate
       usb_read_cont = (cont_read_check.state == 1) // cont_Read wird bei aktiviertem check eingeschaltet
 
      let readerr = teensy.start_read_USB(usb_read_cont)
-      if (readerr > 0)
+      if (readerr == 0)
       {
          print("Fehler in start_read_usb")
       }
@@ -573,10 +573,32 @@ class ViewController: NSViewController, NSWindowDelegate
                // gelesene Daten
                var ind = 0
  
-               print("read_byteArray:")
-               for  ind in 8...31
+               print("CONT read_byteArray:")
+               
+               //var loggerstring:String
+               if (teensy.last_read_byteArray.count > 1)
+               {
+                  // http://stackoverflow.com/questions/25581324/swift-how-can-string-join-work-custom-types
+                  let temparray = teensy.last_read_byteArray[8...(BUFFER_SIZE-9)]
+                  
+                  let tempstring = temparray.map{String($0)}.joined(separator: ",")
+
+                  //var tempstring = teensy.last_read_byteArray.map{String($0)}.joined(separator: ",")
+                  
+                  
+                  // http://stackoverflow.com/questions/36076014/uint8-array-to-strings-in-swift
+              //    let stringArray = teensy.last_read_byteArray.map( { "\($0)" })
+             //     print(stringArray)
+              // let tempstring = String(bytes: teensy.last_read_byteArray, encoding: String.Encoding.utf8)
+               
+               input.string = input.string! + "\n" + tempstring
+               }
+               for  ind in 8...BUFFER_SIZE - 1 - 8
                   //while i < 64
                {
+                //  let temp = teensy.last_read_byteArray[ind]
+                  
+                 // loggerstring = loggerstring + (teensy.last_read_byteArray[ind] as String)
                   print("\(teensy.last_read_byteArray[ind])", terminator: "\t")
                   //ind = ind + 1
                }
@@ -584,18 +606,31 @@ class ViewController: NSViewController, NSWindowDelegate
               // print("\(teensy.last_read_byteArray)")
                loggerDataArray.append(teensy.last_read_byteArray);
 
-               if (packetcount < 5)
+               if (packetcount < 10)
                {
                   
                // Anfrage fuer naechstes Paket schicken
                //packetcount =   packetcount + 1
-               cont_log_USB(paketcnt: (packetcount))
+                  cont_log_USB(paketcnt: (packetcount))
                }
                else
                {
-                  print("")
+                  teensy.read_OK = false
+                  teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
+                  usb_read_cont = false
+                  cont_read_check.state = 0;
+                  print("\n")
+                  var senderfolg = teensy.start_write_USB()
+
+                  
+                  print("\nloggerDataArray:")
                   print ("\(loggerDataArray)")
                }
+               
+            case LOGGER_STOP:
+               packetcount = 0
+               print("\nLOGGER_STOP")
+               
                
 //cont_log_USB
             case WRITE_MMC_TEST:
@@ -760,7 +795,8 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[4] = UInt8((blockcount & 0xFF00)>>8)
        */
       teensy.write_byteArray[3] = packetcount // beginn bei Paket 0
-      
+      input.string = input.string! + "\nBlock: " + String(startblock)
+
       // cont write aktivieren
       cont_write_check.state = 1
       
@@ -778,7 +814,6 @@ class ViewController: NSViewController, NSWindowDelegate
       // index erster Block
       teensy.write_byteArray[1] = UInt8(startblock & 0x00FF)
       teensy.write_byteArray[2] = UInt8((startblock & 0xFF00)>>8)
-      
       /*
        teensy.write_byteArray[3] =  UInt8(blockcount  & 0x00FF)
        teensy.write_byteArray[4] = UInt8((blockcount & 0xFF00)>>8)
