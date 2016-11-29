@@ -323,6 +323,71 @@ class ViewController: NSViewController, NSWindowDelegate
    }
    
    
+   open func writeData(name:String, data:String)
+   {
+      print ("writeData data: \(data)")
+      
+      //http://stackoverflow.com/questions/24097826/read-and-write-data-from-text-file
+      // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
+      
+      do
+      {
+         let documentDirectoryURL = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+         var datapfad = documentDirectoryURL.appendingPathComponent("LoggerdataDir")
+         
+         do
+         {
+            try FileManager.default.createDirectory(atPath: datapfad.path, withIntermediateDirectories: true, attributes: nil)
+         }
+         catch let error as NSError
+         {
+            print(error.localizedDescription);
+         }
+         
+         
+         print ("datapfad: \(datapfad)")
+         
+         datapfad = datapfad.appendingPathComponent(name)
+         
+            //writing
+            do
+            {
+               try data.write(to: datapfad, atomically: false, encoding: String.Encoding.utf8)
+            }
+         catch let error as NSError
+         {
+            print(error.localizedDescription);
+         }
+      }
+      catch
+      {
+         print("catch write")
+      }
+         
+      return
+      if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+      {
+         
+         let path = dir.appendingPathComponent(data)
+         
+         //writing
+         do
+         {
+            try data.write(to: path, atomically: false, encoding: String.Encoding.utf8)
+         }
+         catch {/* error handling here */}
+         
+         //reading
+         do {
+            let text2 = try String(contentsOf: path, encoding: String.Encoding.utf8)
+            print("text2: \(text2)")
+            input.string = text2
+         }
+         catch {/* error handling here */}
+         
+      }
+   } // writeData
+   
   //MARK: - viewDidLoad
    override func viewDidLoad()
    {
@@ -349,6 +414,11 @@ class ViewController: NSViewController, NSWindowDelegate
          let sinus = sinus1 + sinus2 * 0.5 + sinus3 * 0.7 + 1.0
 //         print("\(winkel)\t\(sinus1)\t\(sinus2)\t\(sinus3)\t\(sinus)")
       }
+      
+      
+      
+      writeData(name: "abc.txt",data:"Hallo")
+      //textfile end
      // let xy = Hello()
      // USB_OK.backgroundColor = NSColor.yellowColor()
       USB_OK.textColor = NSColor.yellow
@@ -358,7 +428,7 @@ class ViewController: NSViewController, NSWindowDelegate
       //spannungsanzeige.numberOfTickMarks = 16
       extspannungFeld.doubleValue = 5.0
       extspannungStepper.doubleValue = 5.0
-      input.string = "input-data"
+      //input.string = "input-data"
    
       teensy.write_byteArray[0] = 0xFE
    }
@@ -581,7 +651,7 @@ class ViewController: NSViewController, NSWindowDelegate
                   // http://stackoverflow.com/questions/25581324/swift-how-can-string-join-work-custom-types
                   let temparray = teensy.last_read_byteArray[8...(BUFFER_SIZE-9)]
                   
-                  let tempstring = temparray.map{String($0)}.joined(separator: ",")
+                  let tempstring = temparray.map{String($0)}.joined(separator: "\t")
 
                   //var tempstring = teensy.last_read_byteArray.map{String($0)}.joined(separator: ",")
                   
@@ -619,6 +689,9 @@ class ViewController: NSViewController, NSWindowDelegate
                   teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
                   usb_read_cont = false
                   cont_read_check.state = 0;
+                  
+                  writeData(name: "loggerdump.txt",data:input.string!)
+                  
                   print("\n")
                   var senderfolg = teensy.start_write_USB()
 
@@ -838,8 +911,8 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBAction func report_start_write_USB(_ sender: AnyObject)
    {
       //NSBeep()
-      print("report_start_write_USB code: \(codeFeld.intValue)")
-      print("report_start_write_USB code: \(codeFeld.stringValue)")
+      //print("report_start_write_USB code: \(codeFeld.intValue)")
+      print("report_start_write_USB code string: \(codeFeld.stringValue)")
       let code:UInt8 = UInt8(codeFeld.stringValue, radix: 16)!
       
      // teensy.write_byteArray[0] = UInt8(codeFeld.intValue)
@@ -848,13 +921,13 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[2] = UInt8(data1.intValue)
       teensy.write_byteArray[3] = UInt8(data2.intValue)
       teensy.write_byteArray[4] = UInt8(data3.intValue)
-      print("new write_byteArray in report_start_write_USB: ", terminator: "")
+//      print("new write_byteArray in report_start_write_USB: ", terminator: "\n")
       var i=0;
       
       //for  i in 0...63
       while i < 32
       {
-         print("\(i)\t \(teensy.write_byteArray[i])\t", terminator: "")
+         print("\(i)\t \(teensy.write_byteArray[i])\n", terminator: "")
          i = i+1
       }
       print("*")
