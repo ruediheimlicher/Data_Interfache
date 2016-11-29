@@ -359,6 +359,8 @@ class ViewController: NSViewController, NSWindowDelegate
       extspannungFeld.doubleValue = 5.0
       extspannungStepper.doubleValue = 5.0
       input.string = "input-data"
+   
+      teensy.write_byteArray[0] = 0xFE
    }
    
    //MARK: -   newDataNotification
@@ -388,9 +390,10 @@ class ViewController: NSViewController, NSWindowDelegate
       let senderfolg = teensy.start_write_USB()
       if (senderfolg > 0)
       {
-         
+          NSApplication.shared().terminate(self)
          return true
       }
+      
       return false
    }
    
@@ -543,7 +546,7 @@ class ViewController: NSViewController, NSWindowDelegate
          if (teensy.new_Data).boolValue
          {
             
-            
+            teensy.new_Data = false
             // NSBeep()
             let code:Int = Int(teensy.last_read_byteArray[0])
             
@@ -927,7 +930,7 @@ class ViewController: NSViewController, NSWindowDelegate
       let c1 = data0.intValue + 1
       data0.intValue = c1
       
-      var senderfolg = teensy.start_write_USB()
+      var senderfolg = teensy.cont_write_USB()
 
    }
     else
