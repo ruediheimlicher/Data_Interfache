@@ -568,22 +568,20 @@ class ViewController: NSViewController, NSWindowDelegate
                
                //print("cont_read_USB logger cont: \(code)")
                let packetcount: UInt8 = teensy.last_read_byteArray[3]
-               print("")
                print("cont_read_USB LOGGER_CONT: \(code)\t packetcount: \(packetcount)")
                
                // gelesene Daten
                var ind = 0
+ 
+               print("read_byteArray:")
                for  ind in 8...31
-               //while i < 64
+                  //while i < 64
                {
-                  print("\(ind)\t \(teensy.last_read_byteArray[ind])", terminator: "\n")
+                  print("\(teensy.last_read_byteArray[ind])", terminator: "\t")
                   //ind = ind + 1
                }
-               print("")
 
-               print("read_byteArray:")
-
-               print("\(teensy.last_read_byteArray)")
+              // print("\(teensy.last_read_byteArray)")
                loggerDataArray.append(teensy.last_read_byteArray);
 
                if (packetcount < 5)

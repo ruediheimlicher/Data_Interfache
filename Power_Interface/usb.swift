@@ -25,7 +25,8 @@ open class usb_teensy: NSObject
 {
    var hid_usbstatus: Int32 = 0
    var usb_count: UInt8 = 0
-   let size = BufferSize()
+   //let size = BufferSize()
+ //  let size = BUFFER_SIZE
    var read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
    var last_read_byteArray = [UInt8](repeating: 0x00, count: BUFFER_SIZE)
   /*
@@ -239,7 +240,7 @@ open class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             datatruecounter += 1
-            print("\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
+            print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
  //           print("\(read_byteArray)")
             
             
@@ -272,7 +273,7 @@ open class usb_teensy: NSObject
          {
             //new_Data = false
             datafalsecounter += 1
-            print("--- \(read_byteArray[0])\t\(datafalsecounter)")
+            //print("--- \(read_byteArray[0])\t\(datafalsecounter)")
          }
          //println("*read_USB in Timer result: \(result)")
          
