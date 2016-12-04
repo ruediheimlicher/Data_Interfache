@@ -240,7 +240,7 @@ open class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             datatruecounter += 1
-            print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
+ //           print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
  //           print("\(read_byteArray)")
             
             

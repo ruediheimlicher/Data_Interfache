@@ -125,6 +125,11 @@ class ViewController: NSViewController, NSWindowDelegate
    @IBOutlet weak var Start_Logger: NSButton!
    @IBOutlet weak var Stop_Logger: NSButton!
    
+   
+   // Einstellungen
+   @IBOutlet weak var IntervallPop: NSComboBox!
+   @IBOutlet weak  var TaskListe: NSTableView!
+   
    // USB-code
    @IBOutlet weak var bit0_check: NSButton!
    @IBOutlet weak var bit1_check: NSButton!
@@ -140,6 +145,50 @@ class ViewController: NSViewController, NSWindowDelegate
     @IBOutlet weak var mmcHIFeld: NSTextField!
     @IBOutlet weak var mmcDataFeld: NSTextField!
    
+   
+   var taskArray: NSMutableArray! = NSMutableArray()
+   
+   var swiftArray = [[String:AnyObject]]()
+   
+   //MARK: - Konfig Messung
+   
+   @IBAction func reportTaskIntervall(_ sender: NSComboBox)
+   {
+      print("reportTaskIntervall index: \(sender.indexOfSelectedItem)")
+      if (sender.indexOfSelectedItem >= 0)
+      {
+      let wahl = sender.objectValueOfSelectedItem!
+      print("reportTaskIntervall wahl: \(wahl)")
+      }
+   }
+   
+   @IBAction func reportTaskListe(_ sender: NSTableView)
+   {
+      //print("reportTaskListe index: \(sender.selectedColumn)")
+
+   }
+   
+   @IBAction func reportTaskCheck(_ sender: NSButton)
+   {
+      //print("reportTaskCheck state: \(sender.state)")
+      //let zeile = TaskListe.selectedRow
+      //var zelle = swiftArray[TaskListe.selectedRow] //as! [String:AnyObject]
+      
+     // let check = zelle["task"] as! Int
+     // if (check == 0)
+     
+      if (swiftArray[TaskListe.selectedRow]["task"] as! Int == 1)
+      {
+         swiftArray[TaskListe.selectedRow]["task"] = 0  as AnyObject?
+      }
+      else
+      {
+         //zelle["task"] = 0 as AnyObject?
+         swiftArray[TaskListe.selectedRow]["task"] = 1  as AnyObject?
+      }
+   }
+   
+
    
    @IBAction func report_cont_write(_ sender: AnyObject)
    {
@@ -325,7 +374,19 @@ class ViewController: NSViewController, NSWindowDelegate
    
    open func writeData(name:String, data:String)
    {
-      print ("writeData data: \(data)")
+      /*
+       // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
+       do {
+       let filelist = try filemgr.contentsOfDirectory(atPath: "/")
+       
+       for filename in filelist {
+       print(filename)
+       }
+       } catch let error {
+       print("Error: \(error.localizedDescription)")
+       }
+ */
+      print ("\nwriteData data: \(data)")
       
       //http://stackoverflow.com/questions/24097826/read-and-write-data-from-text-file
       // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
@@ -415,8 +476,31 @@ class ViewController: NSViewController, NSWindowDelegate
 //         print("\(winkel)\t\(sinus1)\t\(sinus2)\t\(sinus3)\t\(sinus)")
       }
       
+      let datum = Calendar.current
+      let date = Date()
       
+      let components = datum.dateComponents([.year, .month, .day, .hour, .minute], from: date as Date)
+      let year =  components.year!-2000
+      let month = components.month!
+      let day = components.day!
+      let hour = components.hour!
+     let min = components.minute!
+
+      print(year)
+      print(month)
+      print(day)
+      print(hour)
+      print(min)
       
+    //  let components = date.components
+       print("date: \(date) ")
+      let formatter = DateFormatter()
+      formatter.dateFormat = "dd.MM.yyyy : hh:mm"
+      //formatter.dateFormat = "yyMMdd_hhmm"
+      
+      let result = formatter.string(from: date)
+      print("Datum: \(result)")
+
       writeData(name: "abc.txt",data:"Hallo")
       //textfile end
      // let xy = Hello()
@@ -431,6 +515,54 @@ class ViewController: NSViewController, NSWindowDelegate
       //input.string = "input-data"
    
       teensy.write_byteArray[0] = 0xFE
+      
+      //MARK: -   TaskListe
+      TaskListe.delegate = self
+      TaskListe.dataSource = self
+      
+      var tempDic = [String:AnyObject]()
+      
+      tempDic["task"] = 1  as AnyObject?
+      tempDic["description"] = "Temperatur messen"  as AnyObject?
+      tempDic["util"] = "T < 100°C"  as AnyObject?
+
+      //taskArray.add(tempDic)
+      
+      swiftArray.append(tempDic)
+
+      tempDic["task"] = 0 as AnyObject?
+      tempDic["description"] = "Spannung messen"  as AnyObject?
+      tempDic["util"] = "U <= 5V"  as AnyObject?
+      
+      //taskArray.add(tempDic)
+      swiftArray.append(tempDic)
+      
+      tempDic["task"] = 0 as AnyObject?
+      tempDic["description"] = "Strom messen"  as AnyObject?
+      tempDic["util"] = "I <= 10A"  as AnyObject?
+      
+      //taskArray.add(tempDic)
+      swiftArray.append(tempDic)
+
+      
+      print("taskArray: \(taskArray!)")
+      print("swiftArray: \(swiftArray)")
+      
+      // Zeile aendern:
+      /*
+      let zeile = 1
+      swiftArray[zeile]["util"] = "< 100A"  as AnyObject?
+      swiftArray[zeile]["description"] = "Strom messen"  as AnyObject?
+      
+      swiftArray[zeile]["task"] = 33  as AnyObject?
+      print("swiftArray2: \(swiftArray)")
+       */
+
+      
+      IntervallPop.usesDataSource = false
+   
+   
+   
    }
    
    //MARK: -   newDataNotification
@@ -463,7 +595,7 @@ class ViewController: NSViewController, NSWindowDelegate
           NSApplication.shared().terminate(self)
          return true
       }
-      
+      NSApplication.shared().terminate(self)
       return false
    }
    
@@ -566,7 +698,7 @@ class ViewController: NSViewController, NSWindowDelegate
       {
          let temperatur = DSLOW | (DSHIGH<<8)
          
-         //print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
+         print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
          DSLO_Feld.intValue = DSLOW
          DSHI_Feld.intValue = DSHIGH
          let  temperaturfloat:Float = Float(temperatur)/10.0
@@ -620,7 +752,7 @@ class ViewController: NSViewController, NSWindowDelegate
             // NSBeep()
             let code:Int = Int(teensy.last_read_byteArray[0])
             
-            print("\ncont_read_USB code: \(code)")
+            //print("\ncont_read_USB code: \(code)")
             switch (code)
             {
             case LOGGER_START:
@@ -715,7 +847,7 @@ class ViewController: NSViewController, NSWindowDelegate
                //print("code ist 0")
             } // switch code
             
-            //var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
+            var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
             //print("data: \(data)")
             
             // let inputstring = teensy.last_read_byteArray as NSArray
@@ -743,21 +875,23 @@ class ViewController: NSViewController, NSWindowDelegate
             
             
             
-            let DSLOW:Int32 = Int32(teensy.last_read_byteArray[DSLO])
-            let DSHIGH:Int32 = Int32(teensy.last_read_byteArray[DSHI])
+            let DSLOW:Int8 = Int8(teensy.last_read_byteArray[DSLO])
+            let DSHIGH:Int8 = Int8(teensy.last_read_byteArray[DSHI])
             
             if (DSLOW > 0)
             {
                let temperatur = DSLOW | (DSHIGH<<8)
             
-               //print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH)\n");
-               DSLO_Feld.intValue = DSLOW
-               DSHI_Feld.intValue = DSHIGH
+               print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH) temperatur: \(temperatur)\n");
+               
+               DSLO_Feld.intValue = Int32(DSLOW)
+               DSHI_Feld.intValue = Int32(DSHIGH)
+               
                let  temperaturfloat:Float = Float(temperatur)/10.0
                _ = NumberFormatter()
             
                let t:NSString = NSString(format:"%.01f", temperaturfloat) as String as String as NSString
-               //print("temperaturfloat: \(temperaturfloat) String: \(t)");
+               print("temperaturfloat: \(temperaturfloat) String: \(t)");
                DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
             //DSTempFeld.floatValue = temperaturfloat
             }
@@ -767,18 +901,33 @@ class ViewController: NSViewController, NSWindowDelegate
             let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
             
             let adc0 = ADC0LO | (ADC0HI<<8)
-            //print ("adc0: \(adc0)");
+            
+            print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
+
+           // print ("adc0: \(adc0)");
             ADCLO_Feld.intValue = ADC0LO
             ADCHI_Feld.intValue = ADC0HI
             
-            let  adcfloat:Float = Float(adc0)/0x400*5.0
+            let  adcfloat:Float = Float(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
+            print ("adcfloat: \(adcfloat)");
+            
+            
             _ = NumberFormatter()
             
             //print("adcfloat: \(adcfloat) String: \(adcfloat)");
-            ADCFeld.stringValue = NSString(format:"%.02f", adcfloat) as String
+            ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
             
-            //print ("adc0: \(adc0)");
 
+            let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
+            let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
+            let adc1 = ADC1LO | (ADC1HI<<8)
+
+            
+            
+            print ("ADC1LO: \(ADC1LO) ADC1HI: \(ADC1HI)  adc1: \(adc1)");
+      
+            
+            
             // mmc
             let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
             let mmcHI:Int32 = Int32(teensy.last_read_byteArray[MMCHI])
@@ -858,7 +1007,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       print("report_start_log_USB");
       teensy.write_byteArray[0] = UInt8(LOGGER_START)
-      startblock=1;
+      startblock=2;
       // index erster Block
       teensy.write_byteArray[1] = UInt8(startblock & 0x00FF)
       teensy.write_byteArray[2] = UInt8((startblock & 0xFF00)>>8)
@@ -1054,11 +1203,6 @@ class ViewController: NSViewController, NSWindowDelegate
    }
    
    
-   override var representedObject: Any? {
-      didSet {
-         // Update the view, if already loaded.
-      }
-   }
    
    @IBAction func ExitNow(_ sender: AnyObject)
    {
@@ -1068,3 +1212,83 @@ class ViewController: NSViewController, NSWindowDelegate
    
 }
 
+// https://www.raywenderlich.com/143828/macos-nstableview-tutorial
+//MARK: - tableView delegate
+// NSTableViewDataSource
+extension ViewController: NSTableViewDataSource
+{
+   
+   func numberOfRows(in tableView: NSTableView) -> Int
+   {
+      return self.swiftArray.count
+   }
+}
+
+extension ViewController: NSTableViewDelegate
+{
+   
+   fileprivate enum CellIdentifiers
+   {
+      static let taskCell = "task"
+      static let descCell = "description"
+      static let utilCell = "util"
+   }
+   
+   
+   func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any?
+   {
+      
+      // var tempzeile = swiftArray[row]
+      
+      guard let item = swiftArray[row]["task"]
+         else
+      {
+         return nil
+      }
+      
+      if (tableColumn?.identifier == "task")
+      {
+         //let temp = self.taskArray.object(at: row) as! NSDictionary
+         //let swifttemp = swiftArray[row] as [String:AnyObject]
+         
+         //let val:Int =   temp.value(forKey:"task") as! Int
+         // print("task val: \(val)")
+         //return (val + 1)%2
+         //return (self.taskArray.object(at: row)as! NSDictionary)["task"]
+         return swiftArray[row]["task"]
+      }
+      else if (tableColumn?.identifier == "description")
+      {
+         
+         //  return (self.taskArray.object(at: row)as! NSDictionary)["description"]
+         return swiftArray[row]["description"]
+      }
+      else if (tableColumn?.identifier == "util")
+      {
+         
+         //return (self.taskArray.object(at: row)as! NSDictionary)["util"]
+         return swiftArray[row]["util"]
+      }
+      
+      return "***"
+   }
+   
+   func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool
+   {
+      print ("shouldSelectRow row: \(row) ")
+      
+      return true
+   }
+   
+   private func tableView(tableView: NSTableView, setObjectValue object: AnyObject?, forTableColumn tableColumn: NSTableColumn?, row: Int)
+   {
+      //(self.swiftArray[row] as! NSMutableDictionary).setObject(object!, forKey: (tableColumn?.identifier)! as NSCopying)
+   }
+   
+   override var representedObject: Any?
+      {
+      didSet {
+      }
+   }
+   
+}

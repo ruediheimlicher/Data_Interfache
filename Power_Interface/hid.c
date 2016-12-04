@@ -422,7 +422,8 @@ int rawhid_open(int max, int vid, int pid, int usage_page, int usage)
 
 static void hid_close(hid_t *hid)
 {
-	if (!hid || !hid->open || !hid->ref) return;
+	if (!hid || !hid->open || !hid->ref)
+      return;
 	IOHIDDeviceUnscheduleFromRunLoop(hid->ref, CFRunLoopGetCurrent( ), kCFRunLoopDefaultMode);
 	IOHIDDeviceClose(hid->ref, kIOHIDOptionsTypeNone);
 	hid->ref = NULL;
