@@ -71,7 +71,7 @@ class ViewController: NSViewController, NSWindowDelegate
    
    @IBOutlet weak var Start: NSButton!
    
-   @IBOutlet weak var inputFeld: NSTextField!
+   @IBOutlet weak var inputDataFeldFeld: NSTextField!
    
    @IBOutlet weak var USB_OK: NSTextField!
    
@@ -90,8 +90,12 @@ class ViewController: NSViewController, NSWindowDelegate
    
    @IBOutlet weak var data1: NSTextField!
    
-   @IBOutlet  var input: NSTextView!
+   @IBOutlet  var inputDataFeld: NSTextView!
 
+   
+    @IBOutlet  var downloadDataFeld: NSTextView!
+   
+   
    @IBOutlet weak var data2: NSTextField!
    @IBOutlet weak var data3: NSTextField!
    
@@ -458,7 +462,7 @@ class ViewController: NSViewController, NSWindowDelegate
          do {
             let text2 = try String(contentsOf: path, encoding: String.Encoding.utf8)
             print("text2: \(text2)")
-            input.string = text2
+            inputDataFeld.string = text2
          }
          catch {/* error handling here */}
          
@@ -615,7 +619,7 @@ class ViewController: NSViewController, NSWindowDelegate
       //spannungsanzeige.numberOfTickMarks = 16
       extspannungFeld.doubleValue = 5.0
       extspannungStepper.doubleValue = 5.0
-      //input.string = "input-data"
+      //inputDataFeld.string = "inputDataFeld-data"
    
       teensy.write_byteArray[0] = 0xFE
       
@@ -891,7 +895,7 @@ class ViewController: NSViewController, NSWindowDelegate
                   //     print(stringArray)
                   // let tempstring = String(bytes: teensy.last_read_byteArray, encoding: String.Encoding.utf8)
                   
-                  input.string = input.string! + "\n" + tempstring
+                  inputDataFeld.string = inputDataFeld.string! + "\n" + tempstring
                }
                for  ind in 8...BUFFER_SIZE - 1 - 8
                   //while i < 64
@@ -920,7 +924,7 @@ class ViewController: NSViewController, NSWindowDelegate
                   usb_read_cont = false
                   cont_read_check.state = 0;
                   
-                  writeData(name: "loggerdump.txt",data:input.string!)
+                  writeData(name: "loggerdump.txt",data:inputDataFeld.string!)
                   
                   print("\n")
                   var senderfolg = teensy.start_write_USB()
@@ -950,7 +954,7 @@ class ViewController: NSViewController, NSWindowDelegate
             var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
             //print("data: \(data)")
             
-            // let inputstring = teensy.last_read_byteArray as NSArray
+            // let inputDataFeldstring = teensy.last_read_byteArray as NSArray
             
             let b1: Int32 = Int32(teensy.last_read_byteArray[1])
             let b2: Int32 = Int32(teensy.last_read_byteArray[2])
@@ -968,8 +972,8 @@ class ViewController: NSViewController, NSWindowDelegate
             
             let rotA:Int32 = (b1 | (b2<<8))
             
-            //inputFeld.stringValue = NSString(format:"%2X", rotA)
-            inputFeld.intValue = Int32(rotA)
+            //inputDataFeldFeld.stringValue = NSString(format:"%2X", rotA)
+            inputDataFeldFeld.intValue = Int32(rotA)
             
             spannungsanzeige.intValue = Int32(rotA )
             
@@ -1018,10 +1022,10 @@ class ViewController: NSViewController, NSWindowDelegate
             ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
             loggerDataArray.append([UInt8(ADC0LO)]);
             
-            var tempinputstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
+            var tempinputDataFeldstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
             
-            // Zeile in input laden
-            input.string = input.string! + "\n" +  tempinputstring
+            // Zeile in inputDataFeld laden
+            inputDataFeld.string = inputDataFeld.string! + "\n" +  tempinputDataFeldstring
 
 
             let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
@@ -1133,7 +1137,7 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[4] = UInt8((blockcount & 0xFF00)>>8)
        */
       teensy.write_byteArray[3] = packetcount // beginn bei Paket 0
-      input.string = input.string! + "\nBlock: " + String(startblock)
+      inputDataFeld.string = inputDataFeld.string! + "\nBlock: " + String(startblock)
 
       // cont write aktivieren
       cont_write_check.state = 1
@@ -1231,7 +1235,7 @@ class ViewController: NSViewController, NSWindowDelegate
       if (out <= 0)
       {
       usbstatus = 0
-      inputFeld.stringValue = "not OK"
+      inputDataFeldFeld.stringValue = "not OK"
       println("kein USB-Device")
       }
       else
