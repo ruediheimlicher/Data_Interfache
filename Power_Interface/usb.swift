@@ -305,6 +305,10 @@ open class usb_teensy: NSObject
       write_byteArray[2] = testArray[2]
       write_byteArray[3] = usb_count
  */
+      if (teensy_present() == false)
+      {
+         return 0
+      }
       write_byteArray[4] = usb_count
       if (usb_count < 0xFF)
       {
@@ -409,6 +413,11 @@ open class usb_teensy: NSObject
       
       
       return senderfolg
+   }
+   
+   open func teensy_present()->Bool
+   {
+      return (usb_present() > 0)
    }
 
    

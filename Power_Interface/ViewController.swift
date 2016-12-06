@@ -10,6 +10,7 @@ import Cocoa
 import AVFoundation
 import Darwin
 
+let TEENSYPRESENT   =   7
 
 // USB Eingang
 // Temperatur
@@ -38,6 +39,7 @@ let LOGGER_CONT = 0xA1
 
 let LOGGER_STOP = 0xAF
 
+let USB_STOP    = 0xAA
 
 class ViewController: NSViewController, NSWindowDelegate
 {
@@ -109,6 +111,20 @@ class ViewController: NSViewController, NSWindowDelegate
    
    
    @IBOutlet weak var extspannungStepper: NSStepper!
+   
+   
+   // Datum
+   @IBOutlet weak var sec_Feld: NSTextField!
+   @IBOutlet weak var min_Feld: NSTextField!
+   @IBOutlet weak var std_Feld: NSTextField!
+   @IBOutlet weak var wt_Feld: NSTextField!
+   @IBOutlet weak var mon_Feld: NSTextField!
+   @IBOutlet weak var jahr_Feld: NSTextField!
+   @IBOutlet weak var datum_Feld: NSTextField!
+   @IBOutlet weak var zeit_Feld: NSTextField!
+   @IBOutlet weak var tagsec_Feld: NSTextField!
+   @IBOutlet weak var tagmin_Feld: NSTextField!
+
    
    @IBOutlet weak var DSLO_Feld: NSTextField!
    @IBOutlet weak var DSHI_Feld: NSTextField!
@@ -449,6 +465,51 @@ class ViewController: NSViewController, NSWindowDelegate
       }
    } // writeData
    
+   
+   func tagsekunde()-> Int
+   {
+      let date = Date()
+      let calendar = Calendar.current
+      let formatter = DateFormatter()
+      formatter.locale = Locale(identifier: "gsw-CH")
+
+      let stunde = calendar.component(.hour, from: date)
+      let minute = calendar.component(.minute, from: date)
+      let sekunde = calendar.component(.second, from: date)
+      return 3600 * stunde + 60 * minute + sekunde
+   }
+   
+   func datumstring()->String
+   {
+      let date = Date()
+      let calendar = Calendar.current
+      let jahr = calendar.component(.year, from: date)
+      let tagdesmonats = calendar.component(.day, from: date)
+      let monatdesjahres = calendar.component(.month, from: date)
+      let formatter = DateFormatter()
+      formatter.locale = Locale(identifier: "gsw-CH")
+
+      formatter.dateFormat = "dd.MM.yyyy"
+      let datumString = formatter.string(from: date)
+      print("datumString: \(datumString)*")
+      return datumString
+   }
+   
+   func zeitstring()->String
+   {
+      let date = Date()
+      let calendar = Calendar.current
+      let formatter = DateFormatter()
+      formatter.locale = Locale(identifier: "gsw-CH")
+      
+      let stunde = calendar.component(.hour, from: date)
+      let minute = calendar.component(.minute, from: date)
+      let sekunde = calendar.component(.second, from: date)
+      formatter.dateFormat = "hh:mm:ss"
+      let zeitString = formatter.string(from: date)
+      return zeitString
+   }
+   
   //MARK: - viewDidLoad
    override func viewDidLoad()
    {
@@ -476,31 +537,73 @@ class ViewController: NSViewController, NSWindowDelegate
 //         print("\(winkel)\t\(sinus1)\t\(sinus2)\t\(sinus3)\t\(sinus)")
       }
       
-      let datum = Calendar.current
+      let calendardatum = Calendar.current
       let date = Date()
       
-      let components = datum.dateComponents([.year, .month, .day, .hour, .minute], from: date as Date)
+      let components = calendardatum.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date as Date)
       let year =  components.year!-2000
       let month = components.month!
       let day = components.day!
       let hour = components.hour!
-     let min = components.minute!
-
+      let min = components.minute!
+      let sec = components.second!
+      let tagminute = hour * 60 + min
+      tagmin_Feld.integerValue = tagminute
+      
+      //let tagsekunde = tagminute * 60 + sec
+      
+      
+      
+      tagsec_Feld.integerValue = tagsekunde()
       print(year)
+      jahr_Feld.integerValue = year
       print(month)
+      mon_Feld.integerValue = month
       print(day)
+      wt_Feld.integerValue = day
       print(hour)
+      std_Feld.integerValue = hour
       print(min)
+      min_Feld.integerValue = min
       
     //  let components = date.components
        print("date: \(date) ")
+      
+      let myLocale = Locale(identifier: "gsw-CH")
+      
+      //: ### Setting an application-wide `TimeZone`
+      //: Notice how we use if-let in case the abbreviation is wrong. It will fallback to the default timezone in that case.
+      if let myTimezone = TimeZone(abbreviation: "GMT")
+      {
+         print("\(myTimezone.identifier)")
+      }
+      
       let formatter = DateFormatter()
-      formatter.dateFormat = "dd.MM.yyyy : hh:mm"
+      formatter.locale = myLocale
+      
+      formatter.dateStyle = .medium
+      formatter.timeStyle = .medium
+      formatter.dateFormat = "dd.MM.yyyy"
+      var dateStr = formatter.string(from: date)
+      print("dateStr: \(dateStr)*")
+      formatter.dateFormat = "hh:mm.ss"
+      var timeStr = formatter.string(from: date)
+      print("timeStr: \(timeStr)*")
+
+
+    //  let formatter = DateFormatter()
+      formatter.dateFormat = "dd.MM.yyyy : hh:mm::ss"
       //formatter.dateFormat = "yyMMdd_hhmm"
       
-      let result = formatter.string(from: date)
-      print("Datum: \(result)")
-
+  //    let datum = formatter.string(from: date)
+      let datum = "\(day).\(month).\(year)"
+      
+      datum_Feld.stringValue = datumstring()
+      print("Datum: \(datum)\tdateStr: \(dateStr)")
+      zeit_Feld.stringValue = zeitstring()
+      
+      
+      
       writeData(name: "abc.txt",data:"Hallo")
       //textfile end
      // let xy = Hello()
@@ -525,28 +628,23 @@ class ViewController: NSViewController, NSWindowDelegate
       tempDic["task"] = 1  as AnyObject?
       tempDic["description"] = "Temperatur messen"  as AnyObject?
       tempDic["util"] = "T < 100°C"  as AnyObject?
-
-      //taskArray.add(tempDic)
-      
+     
       swiftArray.append(tempDic)
 
       tempDic["task"] = 0 as AnyObject?
       tempDic["description"] = "Spannung messen"  as AnyObject?
       tempDic["util"] = "U <= 5V"  as AnyObject?
       
-      //taskArray.add(tempDic)
       swiftArray.append(tempDic)
       
       tempDic["task"] = 0 as AnyObject?
       tempDic["description"] = "Strom messen"  as AnyObject?
       tempDic["util"] = "I <= 10A"  as AnyObject?
       
-      //taskArray.add(tempDic)
       swiftArray.append(tempDic)
 
       
-      print("taskArray: \(taskArray!)")
-      print("swiftArray: \(swiftArray)")
+      //print("swiftArray: \(swiftArray)")
       
       // Zeile aendern:
       /*
@@ -586,7 +684,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       teensycode &= ~(1<<7)
       teensy.write_byteArray[15] = teensycode
-      teensy.write_byteArray[0] |= UInt8(Teensy_Status.intValue)
+      teensy.write_byteArray[0] = UInt8(USB_STOP)
 //    teensy.write_byteArray[1] = UInt8(data0.intValue)
       
       let senderfolg = teensy.start_write_USB()
@@ -747,7 +845,7 @@ class ViewController: NSViewController, NSWindowDelegate
          //NSBeep()
          if (teensy.new_Data).boolValue
          {
-            
+            tagsec_Feld.integerValue = tagsekunde()
             teensy.new_Data = false
             // NSBeep()
             let code:Int = Int(teensy.last_read_byteArray[0])
@@ -784,16 +882,16 @@ class ViewController: NSViewController, NSWindowDelegate
                   let temparray = teensy.last_read_byteArray[8...(BUFFER_SIZE-9)]
                   
                   let tempstring = temparray.map{String($0)}.joined(separator: "\t")
-
+                  
                   //var tempstring = teensy.last_read_byteArray.map{String($0)}.joined(separator: ",")
                   
                   
                   // http://stackoverflow.com/questions/36076014/uint8-array-to-strings-in-swift
-              //    let stringArray = teensy.last_read_byteArray.map( { "\($0)" })
-             //     print(stringArray)
-              // let tempstring = String(bytes: teensy.last_read_byteArray, encoding: String.Encoding.utf8)
-               
-               input.string = input.string! + "\n" + tempstring
+                  //    let stringArray = teensy.last_read_byteArray.map( { "\($0)" })
+                  //     print(stringArray)
+                  // let tempstring = String(bytes: teensy.last_read_byteArray, encoding: String.Encoding.utf8)
+                  
+                  input.string = input.string! + "\n" + tempstring
                }
                for  ind in 8...BUFFER_SIZE - 1 - 8
                   //while i < 64
@@ -841,6 +939,8 @@ class ViewController: NSViewController, NSWindowDelegate
             case WRITE_MMC_TEST:
                print("code ist WRITE_MMC_TEST")
                
+            case USB_STOP:
+               print("code ist USB_STOP")
                
             
             default: break
@@ -916,7 +1016,13 @@ class ViewController: NSViewController, NSWindowDelegate
             
             //print("adcfloat: \(adcfloat) String: \(adcfloat)");
             ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
+            loggerDataArray.append([UInt8(ADC0LO)]);
             
+            var tempinputstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
+            
+            // Zeile in input laden
+            input.string = input.string! + "\n" +  tempinputstring
+
 
             let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
             let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
@@ -1002,10 +1108,20 @@ class ViewController: NSViewController, NSWindowDelegate
    
    
 //MARK: -   Logger
-   @IBAction func report_start_log_USB(_ sender: AnyObject)
+   @IBAction func report_start_download_logger_USB(_ sender: AnyObject)
    {
       
-      print("report_start_log_USB");
+      print("report_start_download_logger_USB");
+      zeit_Feld.stringValue = zeitstring()
+     // tagmin_Feld.integerValue = tagminute
+      tagsec_Feld.integerValue = tagsekunde()
+      let erfolg = UInt8(teensy.USBOpen())
+      if (erfolg == 0)
+      {
+         print("report_start_download_logger_USB: kein teensy da");
+         return
+      }
+
       teensy.write_byteArray[0] = UInt8(LOGGER_START)
       startblock=2;
       // index erster Block
