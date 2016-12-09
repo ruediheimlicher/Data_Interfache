@@ -71,7 +71,11 @@ class ViewController: NSViewController, NSWindowDelegate
    
    var loggerDataArray:[[UInt8]] = [[]]
    
+   
+   var LoggerData = Data()
+   
    var teensy = usb_teensy()
+   
    
    var teensycode:UInt8 = 0
   
