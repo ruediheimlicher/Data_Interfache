@@ -1,0 +1,6 @@
+framework module Pods_Data_Interface {
+  umbrella header "Pods-Data_Interface-umbrella.h"
+
+  export *
+  module * { export * }
+}
