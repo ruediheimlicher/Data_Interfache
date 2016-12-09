@@ -349,34 +349,43 @@ open class usb_teensy: NSObject
 */
       
       //println("write_byteArray: \(write_byteArray)")
-      write_byteArray[6] = 43;
-      write_byteArray[7] = 44;
+      
+      // Test
+      //write_byteArray[6] = 43;
+      //write_byteArray[7] = 44;
 
-      print("\nusb.swift new write_byteArray in start_write_USB code: \(write_byteArray[0])", terminator: "\n")
+      print("\nusb.swift  write_byteArray in start_write_USB code: \(write_byteArray[0])\nSettings: ", terminator: "\n")
       var i=0;
       
+      i = 0 // 16, beginn Data in USB-Buffer
+      while i < DATA_START_BYTE - 1
+      {
+         print("\(write_byteArray[i])", terminator: " ")
+         i = i+1
+      }
+      print("\nData:")
       //for  i in 0...63
-      i = 8
+      i = DATA_START_BYTE // 16, beginn Data in USB-Buffer
       while i < BUFFER_SIZE - 1
       {
-         print(" \(write_byteArray[i])", terminator: "")
+         print("\(write_byteArray[i])", terminator: " ")
          i = i+1
       }
       print("")
       
-      let dateA = Date()
+      //let dateA = Date()
       
-        let senderfolg = rawhid_send(0,&write_byteArray, Int32(BUFFER_SIZE), 500)
+      let senderfolg = rawhid_send(0,&write_byteArray, Int32(BUFFER_SIZE), 500)
     
       
-      let dauer1 = Date() //
+      //let dauer1 = Date() //
       
-      let diff =  (dauer1.timeIntervalSince(dateA))*1000
-      print("dauer rawhid_send: \(diff)")
+      //let diff =  (dauer1.timeIntervalSince(dateA))
+      //print("dauer rawhid_send: \(diff)")
 
       
-      print("\tsenderfolg: \(senderfolg)", terminator: "")
-      print("")
+      print("senderfolg: \(senderfolg)", terminator: "\n")
+     
       if hid_usbstatus == 0
       {
          

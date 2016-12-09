@@ -34,10 +34,21 @@ let WRITE_MMC_TEST  =   0xF1
 
 
 
+let TAKT_LO_BYTE = 14
+let TAKT_HI_BYTE = 15
+
+let DATACOUNT_LO    =   12 // Messung, laufende Nummer
+let DATACOUNT_HI    =   13
+
+
+let DATA_START_BYTE   = 16    // erstes byte fuer Data
+
 let LOGGER_START = 0xA0
 let LOGGER_CONT = 0xA1
 
 let LOGGER_STOP = 0xAF
+
+let LOGGER_SETTING    =  0xB0 // Setzen der Settings fuer die Messungen
 
 let USB_STOP    = 0xAA
 
@@ -149,6 +160,7 @@ class ViewController: NSViewController, NSWindowDelegate
    // Einstellungen
    @IBOutlet weak var IntervallPop: NSComboBox!
    @IBOutlet weak  var TaskListe: NSTableView!
+   @IBOutlet weak var Set_Settings: NSButton!
    
    // USB-code
    @IBOutlet weak var bit0_check: NSButton!
@@ -172,13 +184,64 @@ class ViewController: NSViewController, NSWindowDelegate
    
    //MARK: - Konfig Messung
    
+   @IBAction func reportSetSettings(_ sender: NSButton)
+   {
+      print("reportSetSettings")
+      print("\(swiftArray)")
+      teensy.write_byteArray[0] = UInt8(LOGGER_SETTING)
+      
+      //Intervall lesen
+      let selectedItem = IntervallPop.indexOfSelectedItem
+      let intervallwert = IntervallPop .intValue
+       // Taktintervall in array einsetzen
+      teensy.write_byteArray[TAKT_LO_BYTE] = UInt8(intervallwert & 0x00FF)
+      teensy.write_byteArray[TAKT_HI_BYTE] = UInt8((intervallwert & 0xFF00)>>8)
+      //    print("reportTaskIntervall teensy.write_byteArray[TAKT_LO_BYTE]: \(teensy.write_byteArray[TAKT_LO_BYTE])")
+
+      
+      var senderfolg = teensy.start_write_USB()
+      
+
+      var toppings =
+         ["Pepperoni":0.25,
+          "Sausage":0.26,
+          "Onions":0.02,
+          "Green Peppers":0.03,
+          "Cheese":0.01
+      ]
+      
+      //let items : Array<String> = (swiftArray as AnyObject).valueForKeyPath("name") as! Array<String>
+
+      //let items : Array<String> = (swiftArray as AnyObject).value(forKeyPath:"task") as! Array<String>
+   
+   //print("item: \(items)")
+      
+   }
+ 
+   
    @IBAction func reportTaskIntervall(_ sender: NSComboBox)
    {
       print("reportTaskIntervall index: \(sender.indexOfSelectedItem)")
       if (sender.indexOfSelectedItem >= 0)
       {
-      let wahl = sender.objectValueOfSelectedItem!
-      print("reportTaskIntervall wahl: \(wahl)")
+         let wahl = sender.objectValueOfSelectedItem! as! String
+        let index = sender.indexOfSelectedItem
+        // print("reportTaskIntervall wahl: \(wahl) index: \(index)")
+         // http://stackoverflow.com/questions/24115141/swift-converting-string-to-int
+         let integerwahl:UInt16? = UInt16(wahl)
+         print("reportTaskIntervall integerwahl: \(integerwahl!)")
+        
+         if let integerwahl = UInt16(wahl)
+         {
+            print("By optional binding :", integerwahl) // 20
+         }
+        
+         //et num:Int? = Int(firstTextField.text!);
+      // Taktintervall in array einsetzen
+      teensy.write_byteArray[TAKT_LO_BYTE] = UInt8(integerwahl! & 0x00FF)
+      teensy.write_byteArray[TAKT_HI_BYTE] = UInt8((integerwahl! & 0xFF00)>>8)
+     //    print("reportTaskIntervall teensy.write_byteArray[TAKT_LO_BYTE]: \(teensy.write_byteArray[TAKT_LO_BYTE])")
+ 
       }
    }
    
@@ -857,6 +920,11 @@ class ViewController: NSViewController, NSWindowDelegate
             //print("\ncont_read_USB code: \(code)")
             switch (code)
             {
+            case LOGGER_SETTING:
+               print("LOGGER_SETTINGS:")
+               print("Nr: \(teensy.last_read_byteArray[DATACOUNT_LO]) \(teensy.last_read_byteArray[DATACOUNT_HI]) ")
+               
+               
             case LOGGER_START:
                
                
@@ -1015,7 +1083,12 @@ class ViewController: NSViewController, NSWindowDelegate
             let  adcfloat:Float = Float(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
             print ("adcfloat: \(adcfloat)");
             
+            let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
+            let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
             
+            
+            let messungnummer = NR_LO | (NR_HI<<8)
+            let nrstring = String(messungnummer )
             _ = NumberFormatter()
             
             //print("adcfloat: \(adcfloat) String: \(adcfloat)");
@@ -1025,7 +1098,7 @@ class ViewController: NSViewController, NSWindowDelegate
             var tempinputDataFeldstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
             
             // Zeile in inputDataFeld laden
-            inputDataFeld.string = inputDataFeld.string! + "\n" +  tempinputDataFeldstring
+            inputDataFeld.string = inputDataFeld.string! + String(messungnummer) + "\t" +  tempinputDataFeldstring + "\n" 
 
 
             let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
@@ -1407,7 +1480,9 @@ extension ViewController: NSTableViewDelegate
    
    override var representedObject: Any?
       {
-      didSet {
+      didSet
+      {
+         print("representedObject")
       }
    }
    
