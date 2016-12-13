@@ -91,7 +91,7 @@ open class usb_teensy: NSObject
          let str1 = String(cString: get_manu())
          
          let str2 = String(cString: manu!)
-         print ("manu l: \(l) \(manu)")
+         print ("manu l: \(l) \(manu!) str2: \(str2)")
          if (strlen(manu) > 1)
          {
             let manustr:String = String(cString: manu!)
@@ -177,7 +177,7 @@ open class usb_teensy: NSObject
          var timer : Timer? = nil
          timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(usb_teensy.cont_read_USB(_:)), userInfo: timerDic, repeats: true)
       }
-      return Int(result) //timerDic as NSDictionary
+      return Int(result) //
    }
    
    
@@ -251,14 +251,14 @@ open class usb_teensy: NSObject
              userInfo: ["message":"neue Daten", "data":read_byteArray])
             
            // print("+ new read_byteArray in Timer:", terminator: "")
-            for  i in 0...31
-            {
+            //for  i in 0...31
+            //{
               // print(" \(read_byteArray[i])", terminator: "")
-            }
+            //}
             //print("")
-            let stL = NSString(format:"%2X", read_byteArray[0]) as String
+            //let stL = NSString(format:"%2X", read_byteArray[0]) as String
             //print(" * \(stL)", terminator: "")
-            let stH = NSString(format:"%2X", read_byteArray[1]) as String
+            //let stH = NSString(format:"%2X", read_byteArray[1]) as String
             //print(" * \(stH)", terminator: "")
             
             //var resultat:UInt32 = UInt32(read_byteArray[1])

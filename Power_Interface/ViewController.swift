@@ -55,7 +55,7 @@ let USB_STOP    = 0xAA
 
 class ViewController: NSViewController, NSWindowDelegate
 {
-//   let meineNotification = Notification.Name(rawValue:"newDataNotification")
+//   let meineNotification = Notification.Name(rawValue:"newLoggerDataAktion")
    
    
    // var  myUSBController:USBController
@@ -607,7 +607,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       nc.addObserver(forName:Notification.Name(rawValue:"newdata"),// Name im Aufruf in usb.swift
                      object:nil, queue:nil,
-                     using:newDataNotification)
+                     using:newLoggerDataAktion)
       var deg=0.0;
       while deg<50
       {
@@ -747,13 +747,249 @@ class ViewController: NSViewController, NSWindowDelegate
    
    }
    
-   //MARK: -   newDataNotification
+   //MARK: -   newLoggerDataAktion
    // http://dev.iachieved.it/iachievedit/notifications-and-userinfo-with-swift-3-0/
 
-   func newDataNotification(notification:Notification) -> Void
+   func newLoggerDataAktion(notification:Notification) -> Void
    {
-//      print("ViewController newDataNotification info: \(notification.name)")
-      //print("ViewController newDataNotification  userinfo data: \(notification.userInfo?["data"])");
+      //print("ViewController newLoggerDataAktion info: \(notification.name)")
+      //print("ViewController newLoggerDataAktion  userinfo data: \(notification.userInfo?["data"])");
+      
+         tagsec_Feld.integerValue = tagsekunde()
+         teensy.new_Data = false
+         // NSBeep()
+         let code:Int = Int(teensy.read_byteArray[0])
+         
+         print("newLoggerDataAktion code: \(code)")
+         
+         switch (code)
+         {
+         case LOGGER_SETTING:
+            print("LOGGER_SETTINGS:")
+            print("Nr: \(teensy.last_read_byteArray[DATACOUNT_LO]) \(teensy.last_read_byteArray[DATACOUNT_HI]) ")
+            
+            
+         case LOGGER_START:
+            
+            
+            let startblockLO: UInt8 = teensy.last_read_byteArray[1]
+            let startblockHI: UInt8 = teensy.last_read_byteArray[2]
+            
+            
+            let packetcount: UInt8 = teensy.last_read_byteArray[3]
+            print("newLoggerDataAktion LOGGER_START: \(code)\t packetcount: \(packetcount)")
+            
+         //MARK: LOGGER_CONT
+         case LOGGER_CONT:
+            
+            //print("newLoggerDataAktion logger cont: \(code)")
+            let packetcount: UInt8 = teensy.last_read_byteArray[3]
+            print("newLoggerDataAktion LOGGER_CONT: \(code)\t packetcount: \(packetcount)")
+            
+            // gelesene Daten
+            var ind = 0
+            
+            print("LOGGER_CONT read_byteArray:")
+            
+            //var loggerstring:String
+            if (teensy.last_read_byteArray.count > 1)
+            {
+               // http://stackoverflow.com/questions/25581324/swift-how-can-string-join-work-custom-types
+               let temparray = teensy.last_read_byteArray[8...(BUFFER_SIZE-9)]
+               
+               let tempstring = temparray.map{String($0)}.joined(separator: "\t")
+               
+               //var tempstring = teensy.last_read_byteArray.map{String($0)}.joined(separator: ",")
+               
+               
+               // http://stackoverflow.com/questions/36076014/uint8-array-to-strings-in-swift
+               //    let stringArray = teensy.last_read_byteArray.map( { "\($0)" })
+               //     print(stringArray)
+               // let tempstring = String(bytes: teensy.last_read_byteArray, encoding: String.Encoding.utf8)
+               
+               inputDataFeld.string = inputDataFeld.string! + "\n" + tempstring
+            }
+            for  ind in 8...BUFFER_SIZE - 1 - 8
+               //while i < 64
+            {
+               //  let temp = teensy.last_read_byteArray[ind]
+               
+               // loggerstring = loggerstring + (teensy.last_read_byteArray[ind] as String)
+               print("\(teensy.last_read_byteArray[ind])", terminator: "\t")
+               //ind = ind + 1
+            }
+            
+            // print("\(teensy.last_read_byteArray)")
+            loggerDataArray.append(teensy.last_read_byteArray);
+            
+            if (packetcount < 10)
+            {
+               
+               // Anfrage fuer naechstes Paket schicken
+               //packetcount =   packetcount + 1
+               cont_log_USB(paketcnt: (packetcount))
+            }
+            else
+            {
+               teensy.read_OK = false
+               teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
+               usb_read_cont = false
+               cont_read_check.state = 0;
+               
+               writeData(name: "loggerdump.txt",data:inputDataFeld.string!)
+               
+               print("\n")
+               var senderfolg = teensy.start_write_USB()
+               
+               
+               print("\nloggerDataArray:")
+               print ("\(loggerDataArray)")
+            }
+            
+         case LOGGER_STOP:
+            packetcount = 0
+            print("\nLOGGER_STOP")
+            
+            
+         //cont_log_USB
+         case WRITE_MMC_TEST:
+            print("code ist WRITE_MMC_TEST")
+            
+         case USB_STOP:
+            print("code ist USB_STOP")
+            
+            
+         default: break
+            //print("code ist 0")
+         } // switch code
+         
+         
+         var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
+         //print("data: \(data)")
+         
+         // let inputDataFeldstring = teensy.last_read_byteArray as NSArray
+         
+         let b1: Int32 = Int32(teensy.last_read_byteArray[1])
+         let b2: Int32 = Int32(teensy.last_read_byteArray[2])
+         
+         //print("b1: \(b1)\tb2: \(b2)\n");
+         
+         H_Feld.intValue = b2
+         H_Feld.stringValue = NSString(format:"%2X", b1) as String
+         
+         // H_Feld.stringValue = NSString(format:"%d", a2)
+         
+         L_Feld.intValue = b1
+         L_Feld.stringValue = NSString(format:"%2X", b1) as String
+         // L_Feld.stringValue = NSString(format:"%d", a1)
+         
+         let rotA:Int32 = (b1 | (b2<<8))
+         
+         //inputDataFeldFeld.stringValue = NSString(format:"%2X", rotA)
+         inputDataFeldFeld.intValue = Int32(rotA)
+         
+         spannungsanzeige.intValue = Int32(rotA )
+         
+         
+         
+         let DSLOW:Int8 = Int8(teensy.last_read_byteArray[DSLO])
+         let DSHIGH:Int8 = Int8(teensy.last_read_byteArray[DSHI])
+         
+         if (DSLOW > 0)
+         {
+            let temperatur = DSLOW | (DSHIGH<<8)
+            
+            print("DSLOW: \(DSLOW)\tSDHIGH: \(DSHIGH) temperatur: \(temperatur)\n");
+            
+            DSLO_Feld.intValue = Int32(DSLOW)
+            DSHI_Feld.intValue = Int32(DSHIGH)
+            
+            let  temperaturfloat:Float = Float(temperatur)/10.0
+            _ = NumberFormatter()
+            
+            let t:NSString = NSString(format:"%.01f", temperaturfloat) as String as String as NSString
+            print("temperaturfloat: \(temperaturfloat) String: \(t)");
+            DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
+            //DSTempFeld.floatValue = temperaturfloat
+         }
+         
+         
+         let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
+         let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
+         
+         let adc0 = ADC0LO | (ADC0HI<<8)
+         
+         //           print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
+         
+         // print ("adc0: \(adc0)");
+         ADCLO_Feld.intValue = ADC0LO
+         ADCHI_Feld.intValue = ADC0HI
+         
+         let  adcfloat:Double = Double(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
+         //         print ("adcfloat: \(adcfloat)");
+         
+         let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
+         let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
+         
+         
+         let messungnummer = NR_LO | (NR_HI<<8)
+         let nrstring = String(messungnummer )
+         _ = NumberFormatter()
+         
+         //print("adcfloat: \(adcfloat) String: \(adcfloat)");
+         ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
+         loggerDataArray.append([UInt8(ADC0LO)]);
+         
+         var tempinputDataFeldstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
+         
+         // Zeile in inputDataFeld laden
+         inputDataFeld.string = inputDataFeld.string! + String(messungnummer) + "\t" +  tempinputDataFeldstring + "\n"
+         
+         
+         let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
+         let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
+         let adc1 = ADC1LO | (ADC1HI<<8)
+         let tempzeit = tagsekunde()
+         let datazeile:[Double] = [Double(tempzeit),adcfloat]
+         
+         //      DiagrammDataArray.append(datazeile)
+         
+         // datenzeile fuer Diagramm
+         var tempwerte = [Double] ( repeating: 0.0, count: 9 )
+         tempwerte[0] = Double(tempzeit) // Abszisse
+         tempwerte[1] = Double(adcfloat)
+         tempwerte[2] = Double(adcfloat + 10)
+         //print("tempwerte: \(tempwerte)")
+         DiagrammDataArray.append(tempwerte)
+         //print("DiagrammDataArray: \(DiagrammDataArray)")
+         
+         self.datagraph.setWerteArray(werteArray:tempwerte)
+         
+         let PlatzRechts:Float = 20.0
+         let contentwidth = Float(self.dataScroller.contentView.bounds.size.width)
+         
+         // let lastdata = self.datagraph.DatenArray.last
+         let lastx = Float((self.datagraph.DatenArray.last?[0])!)
+         let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
+         if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
+         {
+            let delta = contentwidth / 10 * 8
+            
+            //print("lastdata zu gross \(lastx) delta:  \(delta)")
+            self.dataScroller.documentView?.frame.origin.x -=   CGFloat(delta)
+            self.dataScroller.contentView.needsDisplay = true
+         }
+         
+         // mmc
+         let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
+         let mmcHI:Int32 = Int32(teensy.last_read_byteArray[MMCHI])
+         let mmcData  = mmcLO | (mmcHI >> 8)
+         mmcLOFeld.intValue = mmcLO
+         mmcHIFeld.intValue = mmcHI
+         mmcDataFeld.intValue = mmcData
+         teensy.new_Data = false
+         
+         
       
    
    }
@@ -935,9 +1171,10 @@ class ViewController: NSViewController, NSWindowDelegate
             tagsec_Feld.integerValue = tagsekunde()
             teensy.new_Data = false
             // NSBeep()
-            let code:Int = Int(teensy.last_read_byteArray[0])
+            let code:Int = Int(teensy.read_byteArray[0])
             
-            //print("\ncont_read_USB code: \(code)")
+            print("cont_read_USB code: \(code)")
+            
             switch (code)
             {
             case LOGGER_SETTING:
@@ -965,7 +1202,7 @@ class ViewController: NSViewController, NSWindowDelegate
                // gelesene Daten
                var ind = 0
  
-               print("CONT read_byteArray:")
+               print("LOGGER_CONT read_byteArray:")
                
                //var loggerstring:String
                if (teensy.last_read_byteArray.count > 1)
@@ -1196,6 +1433,7 @@ class ViewController: NSViewController, NSWindowDelegate
          stop_read_USB_Knopf.isEnabled = true;
          start_write_USB_Knopf.isEnabled = true;
          stop_write_USB_Knopf.isEnabled = true;
+         
       }
       else
          
@@ -1333,59 +1571,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       //println("report_start_write_USB senderfolg: \(senderfolg)")
       
-      
-      /*
-      var USB_Zugang = USBController()
-      USB_Zugang.setKontrollIndex(5)
-      
-      Counter.intValue = USB_Zugang.kontrollIndex()
-      
-      // var  out  = 0
-      
-      //USB_Zugang.Alert("Hoppla")
-      
-      var x = getX()
-      Counter.intValue = x
-      
-      var    out = rawhid_open(1, 0x16C0, 0x0480, 0xFFAB, 0x0200)
-      
-      println("report_start_write_USB out: \(out)")
-      
-      if (out <= 0)
-      {
-      usbstatus = 0
-      inputDataFeldFeld.stringValue = "not OK"
-      println("kein USB-Device")
-      }
-      else
-      {
-      usbstatus = 1
-      println("USB-Device da")
-      var manu = get_manu()
-      //println(manu) // ok, Zahl
-      var manustring = UnsafePointer<CUnsignedChar>(manu)
-      //println(manustring) // ok, Zahl
-      
-      let manufactorername = String.fromCString(UnsafePointer(manu))
-      println("str: %s", manufactorername!)
-      manufactorer.stringValue = manufactorername!
-      
-      /*
-      var strA = ""
-      strA.append(Character("d"))
-      strA.append(UnicodeScalar("e"))
-      println(strA)
-      
-      let x = manu
-      let s = "manufactorer"
-      println("The \(s) is \(manu)")
-      var pi = 3.14159
-      NSLog("PI: %.7f", pi)
-      let avgTemp = 66.844322156
-      println(NSString(format:"AAA: %.2f", avgTemp))
-      */
-      }
-      */
+
       if (usb_write_cont)
       {
       var timer : Timer? = nil
