@@ -1127,6 +1127,7 @@ class ViewController: NSViewController, NSWindowDelegate
          DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
          //DSTempFeld.floatValue = temperaturfloat
       }
+      self.datagraph.initGraphArray()
       self.datagraph.setStartsekunde(startsekunde:tagsekunde())
       self.datagraph.setMaxY(maxY: 40)
       self.datagraph.setDisplayRect()
@@ -1161,7 +1162,7 @@ class ViewController: NSViewController, NSWindowDelegate
       }
    }
    
-   func cont_read_USB(_ timer: Timer)
+   func cont_read_USB(_ timer: Timer) // in newLoggerDaftaAktion verschoben
    {
       if (usb_read_cont)
       {

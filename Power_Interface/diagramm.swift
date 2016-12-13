@@ -16,7 +16,7 @@ class DataPlot: NSView
 {
    var DatenArray:[[CGFloat]]! = [[]]
    var GraphArray = [CGMutablePath]( repeating: CGMutablePath(), count: 8 )
-   var KanalArray = [1,1,0,0,0,0,0,0]
+   var KanalArray = [1,0,0,0,0,0,0,0]
    
    
   // var vorgaben = [[String:String]]()
@@ -37,11 +37,11 @@ class DataPlot: NSView
    {
       static var ZeitKompression: CGFloat = 1.0
       static var Startsekunde: Int = 0
-      static var MajorTeileY: Int = 10 // Teile der Hauptskala
-      static var MinorTeileY: Int = 2// Teile der Subskala
-      static var MaxY: CGFloat = 100.0 // Obere Grenze der Anzeige
-      static var MinY: CGFloat = 0.0 // Obere Grenze der Anzeige
-      static var MaxX: CGFloat = 1000 // Obere Grenze der Abszisse
+      static var MajorTeileY: Int = 10                            // Teile der Hauptskala
+      static var MinorTeileY: Int = 2                             // Teile der Subskala
+      static var MaxY: CGFloat = 100.0                            // Obere Grenze der Anzeige
+      static var MinY: CGFloat = 0.0                              // Untere Grenze der Anzeige
+      static var MaxX: CGFloat = 1000                             // Obere Grenze der Abszisse
       static let NullpunktY: CGFloat = 0.0
       static let NullpunktX: CGFloat = 0.0
       static let DiagrammEcke: CGPoint = CGPoint(x:15, y:10)// Ecke des Diagramms im View
@@ -110,9 +110,8 @@ class DataPlot: NSView
             
             let InputZahl = CGFloat(werteArray[i+1])	// Input vom IOW, 0-255
             
-            
             let graphZahl = CGFloat(InputZahl - Vorgaben.MinY) * FaktorY							// Red auf reale Diagrammhoehe
-  //          Swift.print("i: \(i) InputZahl: \(InputZahl) graphZahl: \(graphZahl)")
+            Swift.print("i: \(i) InputZahl: \(InputZahl) graphZahl: \(graphZahl)")
 
             let rawWert = graphZahl * SortenFaktor							// Wert fuer Anzeige des ganzen Bereichs
             
@@ -145,7 +144,6 @@ class DataPlot: NSView
             {
                Swift.print("GraphArray  von \(i) ist noch Empty")
                neuerPunkt.x = Vorgaben.DiagrammEcke.x
-               neuerGraph.move(to:neuerPunkt)
                
                GraphArray[i].move(to: neuerPunkt)
                
@@ -157,13 +155,14 @@ class DataPlot: NSView
                //Swift.print("GraphArray von \(i) ist nicht mehr Empty")
                //[neuerGraph moveToPoint:[[GraphArray objectAtIndex:i]currentPoint]]//last Point
                //[neuerGraph lineToPoint:neuerPunkt]
+               let currentpoint:CGPoint = GraphArray[i].currentPoint
+               GraphArray[i].move(to:currentpoint)
+
                GraphArray[i].addLine(to:neuerPunkt)
                
             }
          }// if Kanal
       } // for i
-//      let width = self.scrollView.frame.size.width
-//      scrollView.contentView.scrollPoint(NSPoint(width, 0))
       
       needsDisplay = true
       //self.setNeedsDisplay(self.bounds)
@@ -209,7 +208,14 @@ extension CGFloat {
 
 extension DataPlot
 {
-   
+   func initGraphArray()
+   {
+      for i in 0..<GraphArray.count
+      {
+         GraphArray[i] = CGMutablePath.init()
+      }
+   }
+
    
    func setDisplayRect()
    {
@@ -272,25 +278,32 @@ extension DataPlot
       // 4
       context?.addPath(path)
       context?.drawPath(using: .fillStroke)
-
-      if (GraphArray[0].isEmpty)
+      
+      for i in  0..<GraphArray.count
       {
-         //Swift.print("GraphArray is Empty")
-         return
+         if (GraphArray[i].isEmpty)
+         {
+            Swift.print("GraphArray von \(i) ist Empty")
+            break
+         }
+         //Swift.print("GraphArray not Empty")
+         
+         //GraphArray[0].addLine(to: NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height))
+         //GraphArray[0].closeSubpath()
+         let tempgreen = CGFloat(0x00 + (i * 20))
+         let linienfarbe = CGColor.init(red:0x00,green: tempgreen, blue: 0xFF,alpha:1.0)
+         
+         context?.setLineWidth(1.5)
+         context?.setFillColor(fillColor)
+         context?.setStrokeColor(linienfarbe)
+         
+         // 4
+         context?.addPath(GraphArray[i])
+         //context?.beginPath()
+         context?.drawPath(using: .stroke)
+         
       }
-      //Swift.print("GraphArray not Empty")
-      
-      //GraphArray[0].addLine(to: NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height))
-      //GraphArray[0].closeSubpath()
-      let linienfarbe = CGColor.init(red:0x00,green: 0x00, blue: 0xFF,alpha:1.0)
-
-      context?.setLineWidth(1.5)
-      context?.setFillColor(fillColor)
-      context?.setStrokeColor(linienfarbe)
-      
-      // 4
-      context?.addPath(GraphArray[0])
-      context?.drawPath(using: .stroke)
+      //context?.drawPath(using: .stroke)
       //Swift.print("GraphArray drawPath end")
    }
    

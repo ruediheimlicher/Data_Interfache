@@ -190,6 +190,7 @@ open class usb_teensy: NSObject
          
          var result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50)
          
+         
          //println("*cont_read_USB result: \(result)")
          //println("tempbyteArray in Timer: *\(read_byteArray)*")
          // var timerdic: [String: Int]
