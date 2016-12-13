@@ -10,6 +10,7 @@ import Cocoa
 import AVFoundation
 import Darwin
 
+
 let TEENSYPRESENT   =   7
 
 // USB Eingang
@@ -71,11 +72,24 @@ class ViewController: NSViewController, NSWindowDelegate
    
    var loggerDataArray:[[UInt8]] = [[]]
    
+   
+   
+   //var data = datadiagramm()
+   
+   //var datagraph = DataPlot()
+   
+   var DiagrammDataArray:[[Double]] = [[]] // array: 0: abszisse, 1.. data
+   
    var teensy = usb_teensy()
    
    var teensycode:UInt8 = 0
   
    var spistatus:UInt8 = 0;
+   
+ //  @IBOutlet  var loggerdiagramm: datadiagramm!
+   
+   @IBOutlet  var datagraph: DataPlot!
+   @IBOutlet  var dataScroller: NSScrollView!
    
    @IBOutlet weak var manufactorer: NSTextField!
    @IBOutlet weak var Counter: NSTextField!
@@ -189,6 +203,9 @@ class ViewController: NSViewController, NSWindowDelegate
       print("reportSetSettings")
       print("\(swiftArray)")
       teensy.write_byteArray[0] = UInt8(LOGGER_SETTING)
+      //Task lesen
+      
+      
       
       //Intervall lesen
       let selectedItem = IntervallPop.indexOfSelectedItem
@@ -722,11 +739,11 @@ class ViewController: NSViewController, NSWindowDelegate
       swiftArray[zeile]["task"] = 33  as AnyObject?
       print("swiftArray2: \(swiftArray)")
        */
-
       
       IntervallPop.usesDataSource = false
-   
-   
+      var data = datadiagramm.init(nibName: "Datadiagramm", bundle: nil)
+     
+      
    
    }
    
@@ -874,7 +891,10 @@ class ViewController: NSViewController, NSWindowDelegate
          DSTempFeld.stringValue = NSString(format:"%.01f°C", temperaturfloat) as String
          //DSTempFeld.floatValue = temperaturfloat
       }
-
+      self.datagraph.setStartsekunde(startsekunde:tagsekunde())
+      self.datagraph.setMaxY(maxY: 40)
+      self.datagraph.setDisplayRect()
+      
       
       let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
       let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
@@ -1019,6 +1039,7 @@ class ViewController: NSViewController, NSWindowDelegate
                //print("code ist 0")
             } // switch code
             
+            
             var data = NSData(bytes: teensy.last_read_byteArray, length: 32)
             //print("data: \(data)")
             
@@ -1074,14 +1095,14 @@ class ViewController: NSViewController, NSWindowDelegate
             
             let adc0 = ADC0LO | (ADC0HI<<8)
             
-            print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
+ //           print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
 
            // print ("adc0: \(adc0)");
             ADCLO_Feld.intValue = ADC0LO
             ADCHI_Feld.intValue = ADC0HI
             
-            let  adcfloat:Float = Float(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
-            print ("adcfloat: \(adcfloat)");
+            let  adcfloat:Double = Double(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
+   //         print ("adcfloat: \(adcfloat)");
             
             let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
             let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
@@ -1104,13 +1125,37 @@ class ViewController: NSViewController, NSWindowDelegate
             let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
             let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
             let adc1 = ADC1LO | (ADC1HI<<8)
+            let tempzeit = tagsekunde()
+            let datazeile:[Double] = [Double(tempzeit),adcfloat]
+            
+      //      DiagrammDataArray.append(datazeile)
+            
+            // datenzeile fuer Diagramm
+            var tempwerte = [Double] ( repeating: 0.0, count: 9 )
+            tempwerte[0] = Double(tempzeit) // Abszisse
+            tempwerte[1] = Double(adcfloat)
+            tempwerte[2] = Double(adcfloat + 10)
+            //print("tempwerte: \(tempwerte)")
+            DiagrammDataArray.append(tempwerte)
+            //print("DiagrammDataArray: \(DiagrammDataArray)")
+            
+            self.datagraph.setWerteArray(werteArray:tempwerte)
+            
+            let PlatzRechts:Float = 20.0
+            let contentwidth = Float(self.dataScroller.contentView.bounds.size.width)
+            
+           // let lastdata = self.datagraph.DatenArray.last
+            let lastx = Float((self.datagraph.DatenArray.last?[0])!)
+            let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
+            if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
+            {
+               let delta = contentwidth / 10 * 8
+               
+               //print("lastdata zu gross \(lastx) delta:  \(delta)")
+               self.dataScroller.documentView?.frame.origin.x -=   CGFloat(delta)
+               self.dataScroller.contentView.needsDisplay = true
+            }
 
-            
-            
-            print ("ADC1LO: \(ADC1LO) ADC1HI: \(ADC1HI)  adc1: \(adc1)");
-      
-            
-            
             // mmc
             let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
             let mmcHI:Int32 = Int32(teensy.last_read_byteArray[MMCHI])
@@ -1166,6 +1211,7 @@ class ViewController: NSViewController, NSWindowDelegate
 
       }
       print("antwort: \(teensy.status())")
+      
    }
    
    @IBAction func stop_read_USB(_ sender: AnyObject)
