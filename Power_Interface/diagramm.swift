@@ -283,8 +283,12 @@ extension DataPlot
       {
          if (GraphArray[i].isEmpty)
          {
-            Swift.print("GraphArray von \(i) ist Empty")
-            break
+            //Swift.print("GraphArray von \(i) ist Empty")
+            continue
+         }
+         else
+         {
+             //Swift.print("GraphArray von \(i) ist nicht Empty")
          }
          //Swift.print("GraphArray not Empty")
          

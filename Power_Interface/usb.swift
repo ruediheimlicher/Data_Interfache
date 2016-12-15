@@ -167,7 +167,7 @@ open class usb_teensy: NSObject
       let result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50);
       
       print("*report_start_read_USB result: \(result)")
-      print("start_read_byteArray start: *\(read_byteArray)*")
+      print("usb.swift start_read_byteArray start: *\n\(read_byteArray)*")
       
       // var somethingToPass = "It worked in teensy_send_USB"
       let xcont = true;
@@ -183,16 +183,15 @@ open class usb_teensy: NSObject
    
    open func cont_read_USB(_ timer: Timer)
    {
-      //print("*cont_read_USB")
+      //print("*cont_read_USB read_OK: \(read_OK)")
       if (read_OK).boolValue
       {
          //var tempbyteArray = [UInt8](count: 32, repeatedValue: 0x00)
          
          var result = rawhid_recv(0, &read_byteArray, Int32(BUFFER_SIZE), 50)
          
-         
-         //println("*cont_read_USB result: \(result)")
-         //println("tempbyteArray in Timer: *\(read_byteArray)*")
+         // println("*cont_read_USB result: \(result)")
+         // println("tempbyteArray in Timer: *\(read_byteArray)*")
          // var timerdic: [String: Int]
          
          /*
@@ -241,7 +240,7 @@ open class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             datatruecounter += 1
- //           print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
+           print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
  //           print("\(read_byteArray)")
             
             
@@ -269,6 +268,7 @@ open class usb_teensy: NSObject
             
             //print("")
             //var st = NSString(format:"%2X", n) as String
+            
          }
          else
          {
@@ -280,6 +280,7 @@ open class usb_teensy: NSObject
          
          //let theStringToPrint = timer.userInfo as String
          //println(theStringToPrint)
+         //timer.invalidate()
       }
       else
       {
@@ -417,11 +418,11 @@ open class usb_teensy: NSObject
          i = i+1
       }
       print("")
-
+//print("a")
       
       let senderfolg = rawhid_send(0,&write_byteArray, Int32(BUFFER_SIZE), 500)
       
-      
+      //print("b")
       return senderfolg
    }
    

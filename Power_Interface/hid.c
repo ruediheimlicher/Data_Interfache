@@ -71,56 +71,56 @@ int rawhid_recv(int num, void *buf, int len, int timeout)
    //fprintf(stderr,"rawhid_recv start len: %d\n",len);
    //fprintf(stderr,"rawhid_recv start \n");
    hid_t *hid;
-	buffer_t *b;
-	CFRunLoopTimerRef timer=NULL;
-	CFRunLoopTimerContext context;
-	int ret=0, timeout_occurred=0;
+   buffer_t *b;
+   CFRunLoopTimerRef timer=NULL;
+   CFRunLoopTimerContext context;
+   int ret=0, timeout_occurred=0;
    
-	if (len < 1) return 0;
-	hid = get_hid(num);
-	if (!hid || !hid->open) return -1;
-	if ((b = hid->first_buffer) != NULL)
+   if (len < 1) return 0;
+   hid = get_hid(num);
+   if (!hid || !hid->open) return -1;
+   if ((b = hid->first_buffer) != NULL)
    {
-		if (len > b->len) len = b->len;
-		memcpy(buf, b->buf, len);
+      if (len > b->len) len = b->len;
+      memcpy(buf, b->buf, len);
       
-		hid->first_buffer = b->next;
-		free(b);
+      hid->first_buffer = b->next;
+      free(b);
       /*
-      fprintf(stderr,"rawhid_recv  len: %d \n",len);
-      for (int i=0;i<len;i++)
-      {
-         fprintf(stderr,"i: %d\t %us\n",i,(char)buf);
-      }
-      fprintf(stderr,"\n");
+       fprintf(stderr,"rawhid_recv  len: %d \n",len);
+       for (int i=0;i<len;i++)
+       {
+       fprintf(stderr,"i: %d\t %us\n",i,(char)buf);
+       }
+       fprintf(stderr,"\n");
        */
-		return len;
-	}
-	memset(&context, 0, sizeof(context));
-	context.info = &timeout_occurred;
-	timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent() +(double)timeout / 1000.0, 0, 0, 0, timeout_callback, &context);
-	CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
-	while (1) {
-		CFRunLoopRun();
-		if ((b = hid->first_buffer) != NULL) {
-			if (len > b->len) len = b->len;
-			memcpy(buf, b->buf, len);
-			hid->first_buffer = b->next;
-			free(b);
-			ret = len;
-			break;
-		}
-		if (!hid->open) {
-			//printf("rawhid_recv, device not open\n");
-			ret = -1;
-			break;
-		}
-		if (timeout_occurred) break;
-	}
-	CFRunLoopTimerInvalidate(timer);
-	CFRelease(timer);
+      return len;
+   }
+   memset(&context, 0, sizeof(context));
+   context.info = &timeout_occurred;
+   timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent() +(double)timeout / 1000.0, 0, 0, 0, timeout_callback, &context);
+   CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
+   while (1) {
+      CFRunLoopRun();
+      if ((b = hid->first_buffer) != NULL) {
+         if (len > b->len) len = b->len;
+         memcpy(buf, b->buf, len);
+         hid->first_buffer = b->next;
+         free(b);
+         ret = len;
+         break;
+      }
+      if (!hid->open) {
+         //printf("rawhid_recv, device not open\n");
+         ret = -1;
+         break;
+      }
+      if (timeout_occurred) break;
+   }
+   CFRunLoopTimerInvalidate(timer);
+   CFRelease(timer);
    //fprintf(stderr,"rawhid_recv ret: %d\n",ret);
-	return ret;
+   return ret;
    
 }
 
@@ -252,7 +252,7 @@ int rawhid_send(int num, void *buf, int len, int timeout)
    //fprintf(stderr,"rawhid_send A\n");
 #if 1
 #warning "Send timeout not implemented on MACOSX"
-   uint8_t report[32] = {0x0};
+   uint8_t report[64] = {0x0};
    
    //http://opensource.apple.com/tarballs/IOUSBFamily/
    
