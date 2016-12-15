@@ -138,7 +138,11 @@ class ViewController: NSViewController, NSWindowDelegate
    
    @IBOutlet  var inputDataFeld: NSTextView!
 
-   
+   @IBOutlet weak var write_sd_startblock: NSTextField!
+  @IBOutlet weak var write_sd_anzahl: NSTextField!
+   @IBOutlet weak var read_sd_startblock: NSTextField!
+   @IBOutlet weak var read_sd_anzahl: NSTextField!
+
     @IBOutlet  var downloadDataFeld: NSTextView!
    
    
@@ -321,16 +325,22 @@ class ViewController: NSViewController, NSWindowDelegate
       print("start_messung sender: \(sender.state)") // gibt neuen State an
       if (sender.state == 1)
       {
+         print("start_messung start")
          teensy.write_byteArray[0] = UInt8(MESSUNG_START)
          
          teensy.write_byteArray[1] = UInt8(SAVE_SD_RUN)
          // Abschnitt auf SD
          teensy.write_byteArray[ABSCHNITT_BYTE] = 0
-         teensy.write_byteArray[BLOCKOFFSETLO_BYTE] = 0 // Startblock
-         teensy.write_byteArray[BLOCKOFFSETHI_BYTE] = 0
+         let startblock = write_sd_startblock.integerValue
+         teensy.write_byteArray[BLOCKOFFSETLO_BYTE] = UInt8(startblock & 0x00FF) // Startblock
+         teensy.write_byteArray[BLOCKOFFSETHI_BYTE] = UInt8((startblock & 0xFF00)>>8)
+         let zeit = tagsekunde()
+         inputDataFeld.string = "Messung tagsekunde: \(zeit)\n"
+
       }
       else
       {
+         print("start_messung stop")
          teensy.write_byteArray[0] = UInt8(MESSUNG_STOP)
          teensy.write_byteArray[1] = UInt8(SAVE_SD_STOP)
       }
@@ -341,8 +351,8 @@ class ViewController: NSViewController, NSWindowDelegate
 
    @IBAction func report_stop_messung(_ sender: AnyObject)
    {
-      print("start_messung")
-      teensy.write_byteArray[0] = UInt8(MESSUNG_START)
+      print("stop_messung")
+      teensy.write_byteArray[0] = UInt8(MESSUNG_STOP)
       
       teensy.write_byteArray[1] = UInt8(SAVE_SD_RUN)
       // Abschnitt auf SD
@@ -1565,7 +1575,7 @@ class ViewController: NSViewController, NSWindowDelegate
       }
 
       teensy.write_byteArray[0] = UInt8(LOGGER_START)
-      startblock=4;
+      let startblock = read_sd_startblock.integerValue
       // index erster Block
       teensy.write_byteArray[1] = UInt8(startblock & 0x00FF)
       teensy.write_byteArray[2] = UInt8((startblock & 0xFF00)>>8)
@@ -1580,7 +1590,8 @@ class ViewController: NSViewController, NSWindowDelegate
       cont_write_check.state = 1
       
       var senderfolg = teensy.start_write_USB()
-      inputDataFeld.string = inputDataFeld.string! + "\nBlock: " + String(startblock) + "\n"
+      //inputDataFeld.string = inputDataFeld.string! + "\nBlock: " + String(startblock) + "\n"
+      inputDataFeld.string = "Block: " + String(startblock) + "\n"
 
    }
    
