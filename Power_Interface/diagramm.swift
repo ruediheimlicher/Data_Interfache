@@ -17,11 +17,11 @@ class DataPlot: NSView
    var DatenArray:[[CGFloat]]! = [[]]
    var GraphArray = [CGMutablePath]( repeating: CGMutablePath(), count: 8 )
    var KanalArray = [1,0,0,0,0,0,0,0]
-   
+   var FaktorArray:[CGFloat]! = [CGFloat](repeating:0.5,count:8)
    
   // var vorgaben = [[String:String]]()
 
-   fileprivate struct   Konst
+   fileprivate struct   Geom
    {
       static let offsetx: CGFloat = 10.0
       static let offsety: CGFloat = 10.0
@@ -93,7 +93,7 @@ class DataPlot: NSView
       
       let FaktorX:CGFloat = (self.frame.size.width-15.0)/Vorgaben.MaxX		// Umrechnungsfaktor auf Diagrammbreite
 //      Swift.print("frame width: \(self.frame.size.width) FaktorX: \(FaktorX) ")
-      let FaktorY:CGFloat = (self.frame.size.height-15.0)/Vorgaben.MaxY		// Umrechnungsfaktor auf Diagrammhoehe
+      let FaktorY:CGFloat = (self.frame.size.height-(Geom.randoben + Geom.randunten))/Vorgaben.MaxY		// Umrechnungsfaktor auf Diagrammhoehe
       
       //Swift.print("frame height: \(self.frame.size.height) FaktorY: \(FaktorY) ")
       
@@ -101,6 +101,7 @@ class DataPlot: NSView
       {
          if (KanalArray[i] == 1)
          {
+           
             //NSLog(@"+++			Temperatur  setWerteArray: Kanal: %d	x: %2.2f",i,[[wertearray objectAtIndex:0]floatValue]);
             var neuerPunkt:CGPoint = Vorgaben.DiagrammEcke;
  //           Swift.print("i: \(i) neuerPunkt.x vor: \(neuerPunkt.x)")
@@ -117,7 +118,7 @@ class DataPlot: NSView
             
             let DiagrammWert = rawWert * AnzeigeFaktor
             //NSLog(@"setWerteArray: Kanal: %d InputZahl: %2.2F graphZahl: %2.2F rawWert: %2.2F DiagrammWert: %2.2F",i,InputZahl,graphZahl,rawWert,DiagrammWert);
-            
+            FaktorArray[i] = 1/FaktorY //(Vorgaben.MaxY - Vorgaben.MinY)/(self.frame.size.height-(Geom.randoben + Geom.randunten))
             neuerPunkt.y += DiagrammWert;
             //neuerPunkt.y=InputZahl;
             //NSLog(@"setWerteArray: Kanal: %d MinY: %2.2F FaktorY: %2.2f",i,MinY, FaktorY);
@@ -305,6 +306,17 @@ extension DataPlot
          context?.addPath(GraphArray[i])
          //context?.beginPath()
          context?.drawPath(using: .stroke)
+         //https://www.hackingwithswift.com/example-code/core-graphics/how-to-draw-a-text-string-using-core-graphics
+         let p = GraphArray[i].currentPoint
+         let wert = (p.y - (Vorgaben.DiagrammEcke.y)) * FaktorArray[i]
+         let tempWertString = String(format: "%2.1f",  wert)
+         //Swift.print("p: \(p) tempWertString: \(tempWertString)")
+         let paragraphStyle = NSMutableParagraphStyle()
+         paragraphStyle.alignment = .left
+         let attrs = [NSFontAttributeName: NSFont(name: "HelveticaNeue-Thin", size: 10)!, NSParagraphStyleAttributeName: paragraphStyle]
+         
+         tempWertString.draw(with: CGRect(x: p.x + 4, y: p.y-6, width: 40, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
+
          
       }
       //context?.drawPath(using: .stroke)
@@ -314,11 +326,11 @@ extension DataPlot
    
    func PlotRect() -> CGRect
    {
-      let breite = bounds.size.width  -  Konst.randlinks - Konst.randrechts
-      let hoehe = bounds.size.height - Konst.randoben - Konst.randunten
+      let breite = bounds.size.width  -  Geom.randlinks - Geom.randrechts
+      let hoehe = bounds.size.height - Geom.randoben - Geom.randunten
       //let diameter = max(min(width, height), Konst.pieChartMinRadius)
-      let rect = CGRect(x: Konst.offsetx,
-                        y: Konst.offsety ,
+      let rect = CGRect(x: Geom.offsetx,
+                        y: Geom.offsety ,
                         width: breite, height: hoehe)
       
       return rect

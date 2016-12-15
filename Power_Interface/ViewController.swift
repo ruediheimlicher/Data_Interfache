@@ -66,6 +66,7 @@ let LOGGER_CONT = 0xA1
 let LOGGER_STOP = 0xAF
 
 let LOGGER_SETTING    =  0xB0 // Setzen der Settings fuer die Messungen
+let LOGGER_DATA    =  0xB1 // Setzen der Settings fuer die Messungen
 
 let USB_STOP    = 0xAA
 
@@ -824,8 +825,8 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.new_Data = false
       // NSBeep()
       let code:Int = Int(teensy.read_byteArray[0])
-      
-      print("newLoggerDataAktion code: \(code)")
+      let codestring = int2hex(UInt8(code))
+      print("newLoggerDataAktion code: \(code) \(codestring)")
       
       switch (code)
       {
@@ -911,7 +912,8 @@ class ViewController: NSViewController, NSWindowDelegate
             
             
             print("\nnewLoggerDataAktion LOGGER_CONT B loggerDataArray:")
-            print ("\(loggerDataArray)")
+            print ("loggerDataArray:\n\(loggerDataArray)")
+            
          }
          
       case LOGGER_STOP:
@@ -926,6 +928,74 @@ class ViewController: NSViewController, NSWindowDelegate
       case USB_STOP:
          print("code ist USB_STOP")
          
+      case LOGGER_DATA:
+         print("code ist LOGGER_DATA")
+         let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
+         let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
+         
+         let adc0 = ADC0LO | (ADC0HI<<8)
+         
+         //           print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
+         
+         // print ("adc0: \(adc0)");
+         ADCLO_Feld.intValue = ADC0LO
+         ADCHI_Feld.intValue = ADC0HI
+         
+         let  adcfloat:Double = Double(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
+         //         print ("adcfloat: \(adcfloat)");
+         
+         let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
+         let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
+         
+         
+         let messungnummer = NR_LO | (NR_HI<<8)
+         let nrstring = String(messungnummer )
+         _ = NumberFormatter()
+         
+         //print("adcfloat: \(adcfloat) String: \(adcfloat)");
+         ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
+         loggerDataArray.append([UInt8(ADC0LO)]);
+         var tempinputDataFeldstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
+         
+         // Zeile in inputDataFeld laden
+         inputDataFeld.string = inputDataFeld.string! + String(messungnummer) + "\t" +  tempinputDataFeldstring + "\n"
+         
+         
+         let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
+         let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
+         let adc1 = ADC1LO | (ADC1HI<<8)
+         let tempzeit = tagsekunde()
+         let datazeile:[Double] = [Double(tempzeit),adcfloat]
+         
+         //      DiagrammDataArray.append(datazeile)
+         
+         // datenzeile fuer Diagramm
+         var tempwerte = [Double] ( repeating: 0.0, count: 9 )
+         tempwerte[0] = Double(tempzeit) // Abszisse
+         tempwerte[1] = Double(adcfloat)
+         tempwerte[2] = Double(adcfloat + 10)
+         //print("tempwerte: \(tempwerte)")
+         DiagrammDataArray.append(tempwerte)
+         //print("DiagrammDataArray: \(DiagrammDataArray)")
+         
+         self.datagraph.setWerteArray(werteArray:tempwerte)
+         
+         let PlatzRechts:Float = 20.0
+         let contentwidth = Float(self.dataScroller.contentView.bounds.size.width)
+         
+         // let lastdata = self.datagraph.DatenArray.last
+         let lastx = Float((self.datagraph.DatenArray.last?[0])!)
+         let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
+         if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
+         {
+            let delta = contentwidth / 10 * 8
+            
+            //print("lastdata zu gross \(lastx) delta:  \(delta)")
+            self.dataScroller.documentView?.frame.origin.x -=   CGFloat(delta)
+            self.dataScroller.contentView.needsDisplay = true
+         }
+            // end data
+
          
       default: break
          //print("code ist 0")
@@ -959,6 +1029,7 @@ class ViewController: NSViewController, NSWindowDelegate
       spannungsanzeige.intValue = Int32(rotA )
       
       
+      // DS18S20
       
       let DSLOW:Int16 = Int16(teensy.last_read_byteArray[DSLO])
       let DSHIGH:Int16 = Int16(teensy.last_read_byteArray[DSHI])
@@ -982,71 +1053,7 @@ class ViewController: NSViewController, NSWindowDelegate
       }
       
       
-      let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
-      let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
       
-      let adc0 = ADC0LO | (ADC0HI<<8)
-      
-      //           print ("ADC0LO: \(ADC0LO) ADC0HI: \(ADC0HI)  adc0: \(adc0)");
-      
-      // print ("adc0: \(adc0)");
-      ADCLO_Feld.intValue = ADC0LO
-      ADCHI_Feld.intValue = ADC0HI
-      
-      let  adcfloat:Double = Double(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
-      //         print ("adcfloat: \(adcfloat)");
-      
-      let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
-      let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
-      
-      
-      let messungnummer = NR_LO | (NR_HI<<8)
-      let nrstring = String(messungnummer )
-      _ = NumberFormatter()
-      
-      //print("adcfloat: \(adcfloat) String: \(adcfloat)");
-      ADCFeld.stringValue = NSString(format:"%.01f", adcfloat) as String
-      loggerDataArray.append([UInt8(ADC0LO)]);
-      
-      var tempinputDataFeldstring = String(tagsekunde()) + "\t" +  ADCFeld.stringValue
-      
-      // Zeile in inputDataFeld laden
-      inputDataFeld.string = inputDataFeld.string! + String(messungnummer) + "\t" +  tempinputDataFeldstring + "\n"
-      
-      
-      let ADC1LO:Int32 =  Int32(teensy.read_byteArray[ADCLO+2])
-      let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
-      let adc1 = ADC1LO | (ADC1HI<<8)
-      let tempzeit = tagsekunde()
-      let datazeile:[Double] = [Double(tempzeit),adcfloat]
-      
-      //      DiagrammDataArray.append(datazeile)
-      
-      // datenzeile fuer Diagramm
-      var tempwerte = [Double] ( repeating: 0.0, count: 9 )
-      tempwerte[0] = Double(tempzeit) // Abszisse
-      tempwerte[1] = Double(adcfloat)
-      tempwerte[2] = Double(adcfloat + 10)
-      //print("tempwerte: \(tempwerte)")
-      DiagrammDataArray.append(tempwerte)
-      //print("DiagrammDataArray: \(DiagrammDataArray)")
-      
-      self.datagraph.setWerteArray(werteArray:tempwerte)
-      
-      let PlatzRechts:Float = 20.0
-      let contentwidth = Float(self.dataScroller.contentView.bounds.size.width)
-      
-      // let lastdata = self.datagraph.DatenArray.last
-      let lastx = Float((self.datagraph.DatenArray.last?[0])!)
-      let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
-      if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
-      {
-         let delta = contentwidth / 10 * 8
-         
-         //print("lastdata zu gross \(lastx) delta:  \(delta)")
-         self.dataScroller.documentView?.frame.origin.x -=   CGFloat(delta)
-         self.dataScroller.contentView.needsDisplay = true
-      }
       
       // mmc
       let mmcLO:Int32 = Int32(teensy.last_read_byteArray[MMCLO])
@@ -1235,7 +1242,7 @@ class ViewController: NSViewController, NSWindowDelegate
    func cont_read_USB(_ timer: Timer) // in newLoggerDaftaAktion verschoben
    {
       //print("ViewController cont_read_USB")
-      
+      return;
       if (cont_read_check.state == 1)
       {
          //NSBeep()
@@ -1546,6 +1553,7 @@ class ViewController: NSViewController, NSWindowDelegate
    {
       
       print("report_start_download_logger_USB");
+      Stop_Logger.isEnabled = true
       zeit_Feld.stringValue = zeitstring()
      // tagmin_Feld.integerValue = tagminute
       tagsec_Feld.integerValue = tagsekunde()
@@ -1557,7 +1565,7 @@ class ViewController: NSViewController, NSWindowDelegate
       }
 
       teensy.write_byteArray[0] = UInt8(LOGGER_START)
-      startblock=2;
+      startblock=4;
       // index erster Block
       teensy.write_byteArray[1] = UInt8(startblock & 0x00FF)
       teensy.write_byteArray[2] = UInt8((startblock & 0xFF00)>>8)
@@ -1567,12 +1575,12 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[4] = UInt8((blockcount & 0xFF00)>>8)
        */
       teensy.write_byteArray[3] = packetcount // beginn bei Paket 0
-      inputDataFeld.string = inputDataFeld.string! + "\nBlock: " + String(startblock)
-
+ 
       // cont write aktivieren
       cont_write_check.state = 1
       
       var senderfolg = teensy.start_write_USB()
+      inputDataFeld.string = inputDataFeld.string! + "\nBlock: " + String(startblock) + "\n"
 
    }
    
@@ -1582,7 +1590,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       print("\ncont_log_USB packetcount: \(paketcnt)");
       teensy.write_byteArray[0] = UInt8(LOGGER_CONT) // code
-      startblock = 1;
+      startblock = 4;
       // index erster Block
       teensy.write_byteArray[1] = UInt8(startblock & 0x00FF)
       teensy.write_byteArray[2] = UInt8((startblock & 0xFF00)>>8)
@@ -1600,9 +1608,13 @@ class ViewController: NSViewController, NSWindowDelegate
 
    @IBAction func report_stop_log_USB(_ sender: AnyObject)
    {
-      print("report_start_write_USB");
+      print("report_stop_log_USB");
       teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
-
+      
+      var senderfolg = teensy.cont_write_USB()
+      cont_read_check.state = 1
+      
+      
    }
    
    
@@ -1700,7 +1712,11 @@ class ViewController: NSViewController, NSWindowDelegate
       extspannungStepper.doubleValue = extspanung_new
    }
    
-   
+   open func int2hex(_ int:UInt8)->(String)
+   {
+      return String(format:"%2X", int)
+   }
+
    
    @IBAction func ExitNow(_ sender: AnyObject)
    {

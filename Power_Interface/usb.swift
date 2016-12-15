@@ -240,7 +240,9 @@ open class usb_teensy: NSObject
             last_read_byteArray = read_byteArray
             new_Data = true
             datatruecounter += 1
-           print("+++\t\tnewData in usb.swift cont_Read: \(read_byteArray[0])")
+            let codehex = read_byteArray[0]
+            let codehexstring = String(format:"%2X", codehex)
+            print("+++\t\tnewData in usb.swift cont_Read code: \(read_byteArray[0]) \(codehexstring)")
  //           print("\(read_byteArray)")
             
             
@@ -431,7 +433,6 @@ open class usb_teensy: NSObject
       return (usb_present() > 0)
    }
 
-   
 } // class
 
 
