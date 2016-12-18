@@ -96,18 +96,19 @@ class ViewController: NSViewController, NSWindowDelegate
    
    //var datagraph = DataPlot()
    
-   var DiagrammDataArray:[[Double]] = [[]] // array: 0: abszisse, 1.. data
+   var DiagrammDataArray:[[Double]] = [[]]
    
    var teensy = usb_teensy()
    
    var teensycode:UInt8 = 0
   
    var spistatus:UInt8 = 0;
-   
+   var DiagrammFeld:CGRect = CGRect.zero
  //  @IBOutlet  var loggerdiagramm: datadiagramm!
    
    @IBOutlet  var datagraph: DataPlot!
    @IBOutlet  var dataScroller: NSScrollView!
+   @IBOutlet  var dataAbszisse: Abszisse!
    
    @IBOutlet weak var save_SD_check: NSButton!
    @IBOutlet weak var Start_Messung: NSButton!
@@ -336,7 +337,7 @@ class ViewController: NSViewController, NSWindowDelegate
          teensy.write_byteArray[BLOCKOFFSETHI_BYTE] = UInt8((startblock & 0xFF00)>>8)
          let zeit = tagsekunde()
          inputDataFeld.string = "Messung tagsekunde: \(zeit)\n"
-
+         Counter.intValue = 0
       }
       else
       {
@@ -602,6 +603,9 @@ class ViewController: NSViewController, NSWindowDelegate
       }
          
       return
+      
+      
+      
       if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
       {
          
@@ -670,6 +674,27 @@ class ViewController: NSViewController, NSWindowDelegate
       return zeitString
    }
    
+   func datumprefix()->String
+   {
+      let date = Date()
+      let calendar = Calendar.current
+      let formatter = DateFormatter()
+      formatter.locale = Locale(identifier: "gsw-CH")
+      
+      let jahr = calendar.component(.year, from: date)
+      let tagdesmonats = calendar.component(.day, from: date)
+      let monatdesjahres = calendar.component(.month, from: date)
+      let stunde = calendar.component(.hour, from: date)
+      let minute = calendar.component(.minute, from: date)
+
+      
+      
+      formatter.dateFormat = "yyMMdd_HHmm"
+      let prefixString = formatter.string(from: date)
+      return prefixString
+   }
+
+   
   //MARK: - viewDidLoad
    override func viewDidLoad()
    {
@@ -697,6 +722,8 @@ class ViewController: NSViewController, NSWindowDelegate
 //         print("\(winkel)\t\(sinus1)\t\(sinus2)\t\(sinus3)\t\(sinus)")
       }
       
+      
+        
       let calendardatum = Calendar.current
       let date = Date()
       
@@ -726,6 +753,8 @@ class ViewController: NSViewController, NSWindowDelegate
       print(min)
       min_Feld.integerValue = min
       
+      
+      print (datumprefix())
     //  let components = date.components
        print("date: \(date) ")
       
@@ -817,10 +846,21 @@ class ViewController: NSViewController, NSWindowDelegate
        */
       
       IntervallPop.usesDataSource = false
-      var data = datadiagramm.init(nibName: "Datadiagramm", bundle: nil)
-     
       
+      //MARK: -   datagraph
+
+//      var data = datadiagramm.init(nibName: "Datadiagramm", bundle: nil)
+      self.datagraph.wantsLayer = true
+      
+      //self.datagraph.layer?.backgroundColor = CGColor.black
+      self.datagraph.setDatafarbe(farbe:NSColor.red, index:0)
    
+      let abszissebgfarbe:NSColor  = NSColor(red: (0.0), green: (0.0), blue: (0.0), alpha: 0.0)
+
+      self.dataAbszisse.backgroundColor(color:abszissebgfarbe)
+      self.dataAbszisse.setDiagrammFeldHeight(h: self.datagraph.DiagrammFeldHeight())
+
+      //dataAbszisse.drawBackground = false
    }
    
    //MARK: -   newLoggerDataAktion
@@ -845,15 +885,28 @@ class ViewController: NSViewController, NSWindowDelegate
          print("Nr: \(teensy.last_read_byteArray[DATACOUNT_LO]) \(teensy.last_read_byteArray[DATACOUNT_HI]) ")
          
          
-      case LOGGER_START:
+      case LOGGER_START: // Antwort auf LOGGER_START, Block geladen
          
          print("newLoggerDataAktion logger start: \(code)")
-         let startblockLO: UInt8 = teensy.last_read_byteArray[1]
-         let startblockHI: UInt8 = teensy.last_read_byteArray[2]
+         
+         // ladefehler
+         let readerr: UInt8 = teensy.last_read_byteArray[1]
          
          
-         let packetcount: UInt8 = teensy.last_read_byteArray[3]
-         print("newLoggerDataAktion LOGGER_START: \(code)\t packetcount: \(packetcount)")
+         print("newLoggerDataAktion LOGGER_START: \(code)\t readerr: \(readerr)")
+         if (readerr == 0)
+         {
+            print("newLoggerDataAktion LOGGER_START: OK")
+
+            packetcount = 0
+            cont_log_USB(paketcnt: (packetcount))
+         }
+         else
+         {
+            print("newLoggerDataAktion LOGGER_START: Error")
+         }
+         
+         
          
       //MARK: LOGGER_CONT
       case LOGGER_CONT:
@@ -865,18 +918,38 @@ class ViewController: NSViewController, NSWindowDelegate
          // gelesene Daten
          var ind = 0
          
-         print("LOGGER_CONT read_byteArray:")
+         //print("LOGGER_CONT read_byteArray:")
          
          //var loggerstring:String
          if (teensy.last_read_byteArray.count > 1)
          {
             // http://stackoverflow.com/questions/25581324/swift-how-can-string-join-work-custom-types
-            let temparray = teensy.last_read_byteArray[8...(BUFFER_SIZE-9)]
-            
-            let tempstring = temparray.map{String($0)}.joined(separator: "\t")
+            for  index in 16..<BUFFER_SIZE
+            {
+                print("\(teensy.last_read_byteArray[index])", terminator: "\t")
+            }
+
+            var temparray = teensy.last_read_byteArray[16...(BUFFER_SIZE-1)] // Teilarray mit Daten
+            let anz = temparray.count
+            var index = 0
+            // hi und lo zusammenfuegen, neu speichern
+            var newzeilenarray:[UInt16]! = []
+            while (index < temparray.count / 2)
+            {
+               let bb = teensy.last_read_byteArray[16 + 2 * index]
+               //let aa = temparray[2 * index]
+               let a:UInt16 = UInt16(teensy.last_read_byteArray[16 + 2 * index])
+               let b:UInt16 = UInt16(teensy.last_read_byteArray[16 + 2 * index + 1])
+               let tempwert:UInt16 = a | (b << 8)
+               newzeilenarray.append(tempwert)
+               // hi und lo zusammenfuehren
+               index += 1
+             }
+            print ("\nnewzeilenarray: \n\(newzeilenarray)")
+            // http://useyourloaf.com/blog/swift-guide-to-map-filter-reduce/
+            let tempstring = newzeilenarray.map{String($0)}.joined(separator: "\t")
             
             //var tempstring = teensy.last_read_byteArray.map{String($0)}.joined(separator: ",")
-            
             
             // http://stackoverflow.com/questions/36076014/uint8-array-to-strings-in-swift
             //    let stringArray = teensy.last_read_byteArray.map( { "\($0)" })
@@ -885,22 +958,14 @@ class ViewController: NSViewController, NSWindowDelegate
             
             inputDataFeld.string = inputDataFeld.string! + "\n" + tempstring
          }
-         print("teensy.last_read_byteArray\n")
+         print("LOGGER_CONT teensy.last_read_byteArray:\n")
+         var index=0
          
-         for  ind in 8...BUFFER_SIZE - 1 - 8
-            //while i < 64
-         {
-            //  let temp = teensy.last_read_byteArray[ind]
-            
-            // loggerstring = loggerstring + (teensy.last_read_byteArray[ind] as String)
-            print("\(teensy.last_read_byteArray[ind])", terminator: "\t")
-            //ind = ind + 1
-         }
          
          // print("\(teensy.last_read_byteArray)")
          loggerDataArray.append(teensy.last_read_byteArray);
          
-         if (packetcount < 8)
+         if (packetcount < 10)
          {
             
             // Anfrage fuer naechstes Paket schicken
@@ -910,12 +975,15 @@ class ViewController: NSViewController, NSWindowDelegate
          }
          else
          {
+            // download beenden
             teensy.read_OK = false
             teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
             usb_read_cont = false
             cont_read_check.state = 0;
+            let prefix = datumprefix()
+            let dataname = prefix + "_loggerdump.txt"
             
-            writeData(name: "loggerdump.txt",data:inputDataFeld.string!)
+            writeData(name: dataname,data:inputDataFeld.string!)
             
             print("\n")
             var senderfolg = teensy.start_write_USB()
@@ -929,7 +997,23 @@ class ViewController: NSViewController, NSWindowDelegate
       case LOGGER_STOP:
          packetcount = 0
          print("\nLOGGER_STOP")
+         teensy.read_OK = false
+         teensy.write_byteArray[0] = UInt8(LOGGER_STOP)
+         usb_read_cont = false
+         cont_read_check.state = 0;
          
+         let prefix = datumprefix()
+         let dataname = prefix + "_loggerdump.txt"
+         
+         writeData(name: dataname,data:inputDataFeld.string!)
+         
+         print("\n")
+         var senderfolg = teensy.start_write_USB()
+         
+         
+         print("\nnewLoggerDataAktion LOGGER_Stop loggerDataArray:")
+         print ("loggerDataArray:\n\(loggerDataArray)")
+
          
       //cont_log_USB
       case WRITE_MMC_TEST:
@@ -940,6 +1024,12 @@ class ViewController: NSViewController, NSWindowDelegate
          
       case LOGGER_DATA:
          print("code ist LOGGER_DATA")
+         
+         let counterLO = Int32(teensy.read_byteArray[DATACOUNT_LO])
+         let counterHI = Int32(teensy.read_byteArray[DATACOUNT_LO])
+
+         let counter = (counterLO & 0x00FF) | ((counterHI & 0xFF00)>>8)
+         Counter.intValue = counter
          let ADC0LO:Int32 =  Int32(teensy.read_byteArray[ADCLO])
          let ADC0HI:Int32 =  Int32(teensy.read_byteArray[ADCHI])
          
@@ -994,13 +1084,17 @@ class ViewController: NSViewController, NSWindowDelegate
          let contentwidth = Float(self.dataScroller.contentView.bounds.size.width)
          
          // let lastdata = self.datagraph.DatenArray.last
-         let lastx = Float((self.datagraph.DatenArray.last?[0])!)
+         let lastxold = Float((self.datagraph.DatenArray.last?[0])!)
+         let lastx = Float((self.datagraph.DatenDicArray.last?["x"])!)
+         
+         let lastx_n = Float((self.datagraph.DatenDicArray.last?["x"])!)
+         print("last data lastx: \(lastx) lastx_n:  \(lastx_n)")
          let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
          if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
          {
             let delta = contentwidth / 10 * 8
             
-            //print("lastdata zu gross \(lastx) delta:  \(delta)")
+            print("lastdata zu gross \(lastx) delta:  \(delta)")
             self.dataScroller.documentView?.frame.origin.x -=   CGFloat(delta)
             self.dataScroller.contentView.needsDisplay = true
          }
@@ -1216,7 +1310,7 @@ class ViewController: NSViewController, NSWindowDelegate
       }
       self.datagraph.initGraphArray()
       self.datagraph.setStartsekunde(startsekunde:tagsekunde())
-      self.datagraph.setMaxY(maxY: 40)
+      self.datagraph.setMaxY(maxY: 100)
       self.datagraph.setDisplayRect()
       
       
@@ -1736,6 +1830,18 @@ class ViewController: NSViewController, NSWindowDelegate
    }
    
 }
+
+//MARK: - extensions
+extension NSView
+{
+   func backgroundColor(color: NSColor)
+   {
+      wantsLayer = true
+      layer?.backgroundColor = color.cgColor
+   }
+   
+}
+
 
 // https://www.raywenderlich.com/143828/macos-nstableview-tutorial
 //MARK: - tableView delegate
