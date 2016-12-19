@@ -924,7 +924,9 @@ class ViewController: NSViewController, NSWindowDelegate
          if (teensy.last_read_byteArray.count > 1)
          {
             // http://stackoverflow.com/questions/25581324/swift-how-can-string-join-work-custom-types
-            for  index in 16..<BUFFER_SIZE
+            
+            print("Kontrolle teensy.last_read_byteArray\n")
+            for  index in 0..<BUFFER_SIZE
             {
                 print("\(teensy.last_read_byteArray[index])", terminator: "\t")
             }
