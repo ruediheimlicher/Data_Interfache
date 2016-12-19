@@ -242,7 +242,7 @@ open class usb_teensy: NSObject
             datatruecounter += 1
             let codehex = read_byteArray[0]
             let codehexstring = String(format:"%2X", codehex)
-            print("+++\t\tnewData in usb.swift cont_Read code: \(read_byteArray[0]) \(codehexstring)")
+            //print("+++\t\tnewData in usb.swift cont_Read code: \(read_byteArray[0]) \(codehexstring)")
  //           print("\(read_byteArray)")
             
             

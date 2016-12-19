@@ -233,7 +233,7 @@ class ViewController: NSViewController, NSWindowDelegate
       
       let save_SD = save_SD_check.state
       var loggersettings:UInt8 = 0
-      if ((save_SD == 1))
+      if ((save_SD == 1)) // Daten auf SD sichern
       {
          loggersettings = loggersettings | 0x01 // Bit 0
          
@@ -563,7 +563,7 @@ class ViewController: NSViewController, NSWindowDelegate
        print("Error: \(error.localizedDescription)")
        }
  */
-      print ("\nwriteData data: \(data)")
+      //print ("\nwriteData data: \(data)")
       
       //http://stackoverflow.com/questions/24097826/read-and-write-data-from-text-file
       // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
@@ -742,21 +742,21 @@ class ViewController: NSViewController, NSWindowDelegate
       
       
       tagsec_Feld.integerValue = tagsekunde()
-      print(year)
+      //print(year)
       jahr_Feld.integerValue = year
-      print(month)
+      //print(month)
       mon_Feld.integerValue = month
-      print(day)
+      //print(day)
       wt_Feld.integerValue = day
-      print(hour)
+      //print(hour)
       std_Feld.integerValue = hour
-      print(min)
+      //print(min)
       min_Feld.integerValue = min
       
       
-      print (datumprefix())
+      //print (datumprefix())
     //  let components = date.components
-       print("date: \(date) ")
+       //print("date: \(date) ")
       
       let myLocale = Locale(identifier: "gsw-CH")
       
@@ -774,10 +774,10 @@ class ViewController: NSViewController, NSWindowDelegate
       formatter.timeStyle = .medium
       formatter.dateFormat = "dd.MM.yyyy"
       var dateStr = formatter.string(from: date)
-      print("dateStr: \(dateStr)*")
+      //print("dateStr: \(dateStr)*")
       formatter.dateFormat = "hh:mm.ss"
       var timeStr = formatter.string(from: date)
-      print("timeStr: \(timeStr)*")
+      //print("timeStr: \(timeStr)*")
 
 
     //  let formatter = DateFormatter()
@@ -788,7 +788,7 @@ class ViewController: NSViewController, NSWindowDelegate
       let datum = "\(day).\(month).\(year)"
       
       datum_Feld.stringValue = datumstring()
-      print("Datum: \(datum)\tdateStr: \(dateStr)")
+      //print("Datum: \(datum)\tdateStr: \(dateStr)")
       zeit_Feld.stringValue = zeitstring()
       
       
@@ -876,7 +876,7 @@ class ViewController: NSViewController, NSWindowDelegate
       // NSBeep()
       let code:Int = Int(teensy.read_byteArray[0])
       let codestring = int2hex(UInt8(code))
-      print("newLoggerDataAktion code: \(code) \(codestring)")
+      //print("newLoggerDataAktion code: \(code) \(codestring)")
       
       switch (code)
       {
@@ -990,7 +990,7 @@ class ViewController: NSViewController, NSWindowDelegate
             
             
             print("\nnewLoggerDataAktion LOGGER_CONT B loggerDataArray:")
-            print ("loggerDataArray:\n\(loggerDataArray)")
+            print ("loggerDataArray packetcount: \(packetcount):\n\(loggerDataArray)")
             
          }
          
@@ -1023,7 +1023,7 @@ class ViewController: NSViewController, NSWindowDelegate
          print("code ist USB_STOP")
          
       case LOGGER_DATA:
-         print("code ist LOGGER_DATA")
+         //print("code ist LOGGER_DATA")
          
          let counterLO = Int32(teensy.read_byteArray[DATACOUNT_LO])
          let counterHI = Int32(teensy.read_byteArray[DATACOUNT_LO])
@@ -1041,8 +1041,10 @@ class ViewController: NSViewController, NSWindowDelegate
          ADCLO_Feld.intValue = ADC0LO
          ADCHI_Feld.intValue = ADC0HI
          
-         let  adcfloat:Double = Double(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
+         var  adcfloat:Float = Float(adc0) * 249 / 1024   // Kalibrierung teensy2: VREF ist 2.49 anstatt 2.56
          //         print ("adcfloat: \(adcfloat)");
+         
+         adcfloat = floorf(adcfloat * Float(2)) / 2
          
          let NR_LO = Int32(teensy.read_byteArray[DATACOUNT_LO])
          let NR_HI = Int32(teensy.read_byteArray[DATACOUNT_HI])
@@ -1065,7 +1067,7 @@ class ViewController: NSViewController, NSWindowDelegate
          let ADC1HI:Int32 =  Int32(teensy.read_byteArray[ADCHI+2])
          let adc1 = ADC1LO | (ADC1HI<<8)
          let tempzeit = tagsekunde()
-         let datazeile:[Double] = [Double(tempzeit),adcfloat]
+         let datazeile:[Double] = [Double(tempzeit),Double(adcfloat)]
          
          //      DiagrammDataArray.append(datazeile)
          
@@ -1087,9 +1089,10 @@ class ViewController: NSViewController, NSWindowDelegate
          let lastxold = Float((self.datagraph.DatenArray.last?[0])!)
          let lastx = Float((self.datagraph.DatenDicArray.last?["x"])!)
          
-         let lastx_n = Float((self.datagraph.DatenDicArray.last?["x"])!)
-         print("last data lastx: \(lastx) lastx_n:  \(lastx_n)")
+         //let lastx_n = Float((self.datagraph.DatenDicArray.last?["x"])!)
          let  docviewx = Float((self.dataScroller.documentView?.frame.origin.x)!)
+         print("last data lastx: \(lastx) docviewx:  \(docviewx) diff lastx + docviewx: \(lastx + docviewx) ")
+
          if (((lastx) + docviewx ) > (contentwidth / 10 * 8 ) + PlatzRechts) // docviewx ist negativ
          {
             let delta = contentwidth / 10 * 8

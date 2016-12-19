@@ -30,11 +30,11 @@ class DataPlot: NSView
    {
       // Abstand von bounds
       static let randunten: CGFloat = 15.0
-      static let randlinks: CGFloat = 15.0
+      static let randlinks: CGFloat = 0.0
       static let randoben: CGFloat = 10.0
       static let randrechts: CGFloat = 10.0
       // Abstand vom Feldrand
-      static let offsetx: CGFloat = 20.0 // Offset des Nullpunkts
+      static let offsetx: CGFloat = 0.0 // Offset des Nullpunkts
       static let offsety: CGFloat = 15.0
       static let freey: CGFloat = 20.0 // Freier Raum oben
       static let freex: CGFloat = 15.0 // Freier Raum rechts
@@ -45,37 +45,43 @@ class DataPlot: NSView
    
    fileprivate struct   Vorgaben
    {
-      static var ZeitKompression: CGFloat = 1.0
-      static var Startsekunde: Int = 0
-      static var MajorTeileY: Int = 10                            // Teile der Hauptskala
-      static var MinorTeileY: Int = 3                             // Teile der Subskala
+      static var MajorTeileY: Int = 10                           // Teile der Hauptskala
+      static var MinorTeileY: Int = 2                             // Teile der Subskala
       static var MaxY: CGFloat = 100.0                            // Obere Grenze der Anzeige
       static var MinY: CGFloat = 0.0                              // Untere Grenze der Anzeige
       static var MaxX: CGFloat = 1000                             // Obere Grenze der Abszisse
+
+      static var ZeitKompression: CGFloat = 1.0
+      static var Startsekunde: Int = 0
       static let NullpunktY: CGFloat = 0.0
       static let NullpunktX: CGFloat = 0.0
       static let DiagrammEcke: CGPoint = CGPoint(x:15, y:10)// Ecke des Diagramms im View
       static let DiagrammeckeY: CGFloat = 0.0 //
- //     static let StartwertX: CGFloat = 0.0 // Abszisse des ersten Wertew
- //     static let StartwertY: CGFloat = 0.0
+      static let StartwertX: CGFloat = 0.0 // Abszisse des ersten Wertew
+      // static let StartwertY: CGFloat = 0.0
+      
+      // Achsen
+      static let rastervertikal = 2 // Sprung innerhalb MajorTeileY + MinorTeileY
       
       
+      static let majorrasterhorizontal = 50 // Sprung innerhalb Zeitachse
+static let minorrasterhorizontal = 10
    }
    
    
    override convenience init(frame: CGRect)
    {
       self.init(frame:frame);
-      Swift.print("init")
-      diagrammfeld = DiagrammRect(rect: PlotRect())
+      Swift.print("DataPlot init")
+      diagrammfeld = DiagrammRect(rect: self.bounds)
       // other code
    }
 
    required init(coder: NSCoder)
    {
-      Swift.print("DataPlot coder")
+      //Swift.print("DataPlot coder")
       super.init(coder: coder)!
-      diagrammfeld = DiagrammRect(rect: PlotRect())
+      diagrammfeld = DiagrammRect(rect:  self.bounds)
       
    }
 
@@ -120,14 +126,14 @@ class DataPlot: NSView
  //     Swift.print("")
       let AnzeigeFaktor:CGFloat = 1.0//= maxSortenwert/maxAnzeigewert;
       let SortenFaktor:CGFloat = 1.0
-      let feld = DiagrammRect(rect: PlotRect())
+      let feld = DiagrammRect(rect: self.bounds)
       //let FaktorX:CGFloat = (self.frame.size.width-15.0)/Vorgaben.MaxX		// Umrechnungsfaktor auf Diagrammbreite
       let FaktorX:CGFloat = feld.size.width/Vorgaben.MaxX
       
       //            //let FaktorY:CGFloat = (self.frame.size.height-(Geom.randoben + Geom.randunten))/Vorgaben.MaxY		// Umrechnungsfaktor auf Diagrammhoehe
       
       let FaktorY:CGFloat = feld.size.height / Vorgaben.MaxY
-      Swift.print("feld height: \(feld.size.height) Vorgaben.MaxY: \(Vorgaben.MaxY) FaktorY: \(FaktorY) ")
+      //Swift.print("abszisse feld height: \(feld.size.height) Vorgaben.MaxY: \(Vorgaben.MaxY) FaktorY: \(FaktorY) ")
 
       
       //Swift.print("frame height: \(self.frame.size.height) FaktorY: \(FaktorY) ")
@@ -200,7 +206,7 @@ class DataPlot: NSView
 
          
       } // for i
-      Swift.print("tempKanalDatenDic: \t\(tempKanalDatenDic)\n")
+      //Swift.print("tempKanalDatenDic: \t\(tempKanalDatenDic)\n")
       DatenDicArray.append(tempKanalDatenDic)
      // Swift.print("DatenDicArray: \n\(DatenDicArray)\n")
       needsDisplay = true
@@ -228,7 +234,8 @@ class DataPlot: NSView
    
 }
 
-extension Int {
+extension Int
+{
    var cgf: CGFloat { return CGFloat(self) }
    var f: Float { return Float(self) }
 }
@@ -296,6 +303,7 @@ extension DataPlot
       context?.drawPath(using: .fillStroke)
    }
    
+   /*
    func abszisse(rect: CGRect)->CGPath
    {
       let path = CGMutablePath()
@@ -359,7 +367,7 @@ extension DataPlot
       
       return path
    }
-  
+  */
    func achsen(rect: CGRect)->CGPath
    {
       let path = CGMutablePath()
@@ -367,8 +375,8 @@ extension DataPlot
       let abszissestart = rect.origin.y
       let abszisseend = rect.origin.y + rect.size.height + 10
       
-      let ordinatestart = rect.origin.y
-      let ordinateend = rect.origin.y + rect.size.width + 10
+      let ordinatestart = rect.origin.x
+      let ordinateend = rect.origin.x + rect.size.width + 10
       
       let bigmark = CGFloat(10)
       let submark = CGFloat(3)
@@ -388,6 +396,99 @@ extension DataPlot
       return path
    }
    
+   func horizontalelinen(rect: CGRect)->CGPath
+   {
+      let path = CGMutablePath()
+      
+      
+      let liniestart = rect.origin.x
+      let linieend = rect.origin.x + rect.size.width
+      
+      let bigmark = CGFloat(10)
+      let submark = CGFloat(3)
+      
+      let deltay = rect.size.height / CGFloat(Vorgaben.MajorTeileY)  * CGFloat(Vorgaben.rastervertikal)
+      var posy = rect.origin.y
+      for pos in 0...(Vorgaben.MajorTeileY )
+      {
+         if ((pos > 0) && (( pos % Vorgaben.rastervertikal ) == 0))
+         {
+            let s = (Vorgaben.rastervertikal % pos)
+            //Swift.print("pos: \(pos) y: \(rect.origin.y +  CGFloat(pos / Vorgaben.rastervertikal) * CGFloat(deltay))")
+            path.move(to: CGPoint(x: liniestart , y: rect.origin.y +  CGFloat(pos / Vorgaben.rastervertikal) * CGFloat(deltay)))
+            //path.move(to: rect.origin)
+            // linie nach rechts
+            path.addLine(to: CGPoint(x: linieend, y: rect.origin.y  +  CGFloat(pos / Vorgaben.rastervertikal) * CGFloat(deltay)))
+
+         }
+      }
+      path.move(to: CGPoint(x: liniestart , y: rect.origin.y ))
+      //path.move(to: rect.origin)
+      // linie nach rechts
+      path.addLine(to: CGPoint(x: linieend, y: rect.origin.y))
+      // wieder nach links
+      
+      
+      
+      
+      return path
+   }
+   
+   func vertikalelinen(rect: CGRect, abszisse: CGFloat)->CGPath
+   {
+      
+      let path = CGMutablePath()
+      let bigmark = CGFloat(10)
+      let submark = CGFloat(4)
+      
+      let liniestart = rect.origin.y
+      let linieend = rect.origin.y + rect.size.height
+      
+      let markend = rect.origin.y + submark
+      
+      //let deltax = rect.size.height / CGFloat(Vorgaben.MajorTeileY)  * CGFloat(Vorgaben.rastervertikal)
+      //var posy = rect.origin.y
+      // if ((Int(abszisse) % Vorgaben.rasterhorizontal) == 0)
+      
+      for pos in Int(rect.origin.x)..<Int(abszisse)
+      {
+         if (pos % Vorgaben.minorrasterhorizontal == 0)
+         {
+            let posx =  CGFloat(pos)
+            //Swift.print("vertikaleline posx: \(posx) liniestart: \(liniestart) linieend: \(linieend))")
+            path.move(to: CGPoint(x: posx, y: liniestart ))
+            
+            if ((pos > 0)&&(pos % Vorgaben.majorrasterhorizontal == 0))
+            {
+               //path.move(to: rect.origin)
+               // linie nach oben
+               path.addLine(to: CGPoint(x: posx, y: linieend ))
+               
+               let labelfarbe = NSColor.init(red:0.5,green: 0.8, blue: 0.5,alpha:1.0)
+               let tempWertString = String(format: "%d",  pos)
+               //         Swift.print("i: \(i) p.y: \(p.y) wert: \(wert) tempWertString: \(tempWertString) DatenArray.last: \(DatenArray.last)")
+               let paragraphStyle = NSMutableParagraphStyle()
+               paragraphStyle.alignment = .center
+               
+               let attrs = [NSFontAttributeName: NSFont(name: "HelveticaNeue", size: 10)!, NSParagraphStyleAttributeName: paragraphStyle ,NSForegroundColorAttributeName: labelfarbe]
+               tempWertString.draw(with: CGRect(x: posx-20, y: liniestart-16, width: 40, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
+
+               
+            }
+            else
+            {
+               path.addLine(to: CGPoint(x: posx, y: markend ))
+            }
+         }
+      }
+      
+      return path
+   }
+   
+   
+   
+
+   
    func drawDiagrammRect(rect: CGRect, inContext context: CGContext?,
                          borderColor: CGColor, fillColor: CGColor)
    {
@@ -402,7 +503,7 @@ extension DataPlot
       //  let diagrammrect = CGRect.init(x: rect.origin.x + Geom.offsetx, y: rect.origin.y + Geom.offsety, width: rect.size.width - Geom.offsetx - Geom.freex , height: rect.size.height - Geom.offsety - Geom.freey)
      // diagrammfeld = DiagrammRect(rect: PlotRect())
 
-      //let diagrammrect = DiagrammRect(rect: PlotRect())
+   //   diagrammfeld = DiagrammRect(rect: self.bounds)
       
       let x = rect.origin.x
       let y = rect.origin.y
@@ -417,15 +518,26 @@ extension DataPlot
       //    path.addLine(to: NSMakePoint(diagrammrect.origin.x + diagrammrect.size.width, diagrammrect.origin.y + diagrammrect.size.height))
       path.closeSubpath()
       
-      context?.setLineWidth(1.5)
+      context?.setLineWidth(0.4)
       context?.setFillColor(fillColor)
       context?.setStrokeColor(borderColor)
       
       // 4
  //     context?.addPath(path)
       // context?.drawPath(using: .fillStroke)
-      let achsenpath = achsen(rect:diagrammfeld)
+      var achsenfeld = diagrammfeld
+      achsenfeld.origin.x = 0
+      let achsenpath = achsen(rect:achsenfeld)
+      context?.setLineWidth(0.4)
       context?.addPath(achsenpath)
+      
+      var horizontalelinenfeld = self.diagrammfeld
+      let horizontalelinenpfad = horizontalelinen(rect:horizontalelinenfeld)
+      
+      context?.addPath(horizontalelinenpfad)
+
+      context?.drawPath(using: .stroke)
+      
       let abszissebreite = CGFloat(10.0)
       var abszisserect = diagrammfeld
       abszisserect.size.width = abszissebreite
@@ -441,6 +553,18 @@ extension DataPlot
       //context?.setFillColor(CGColor.init(red:0x00,green: 0xFF, blue: 0xFF,alpha:1.0))
       context?.drawPath(using: .stroke)
       */
+      
+      let lastdata = DatenDicArray.last
+      let lastdatax = lastdata?["x"]
+      let lastdatay = lastdata?["0"]
+      
+      if ((lastdatax) != nil)
+      {
+         let vertikalpfad = vertikalelinen(rect: diagrammfeld, abszisse: CGFloat(lastdatax!))
+         context?.setLineWidth(0.4)
+         context?.addPath(vertikalpfad)
+         context?.drawPath(using: .stroke)
+      }
       
       for i in  0..<GraphArray.count
       {
@@ -469,16 +593,14 @@ extension DataPlot
          //context?.beginPath()
          context?.drawPath(using: .stroke)
          
-         let lastdata = DatenDicArray.last
-         let lastdatax = lastdata?["x"]
-         let lastdatay = lastdata?["0"]
          let wert = lastdata?[String(i)]
-         
+ //        Swift.print("diagramm lastdatax: \(lastdatax!)")
+
          //         Swift.print("i: \(i) qlastx: \(qlastx) qlasty: \(qlasty) wert: \(wert)\n")
          
          //https://www.hackingwithswift.com/example-code/core-graphics/how-to-draw-a-text-string-using-core-graphics
          let p = GraphArray[i].currentPoint
-         
+         //Swift.print("diagramm p x: \(p.x)")
          
          //         Swift.print("qlastx: \(qlastx)  DatenDicArray: \n\(DatenDicArray)")
          //         let a = DatenDicArray.filter{$0["x"] == qlasty}
@@ -497,6 +619,9 @@ extension DataPlot
          
          
       }
+      
+      
+
       context?.drawPath(using: .stroke)
       //Swift.print("GraphArray drawPath end")
    }
@@ -529,23 +654,23 @@ extension DataPlot
       diagrammfeld.size.height = h
    }
 
-   
    func DiagrammRect(rect: CGRect) -> CGRect
    {
-           let diagrammrect = CGRect.init(x: rect.origin.x + Geom.offsetx, y: rect.origin.y + Geom.offsety, width: rect.size.width - Geom.offsetx - Geom.freex , height: rect.size.height - Geom.offsety - Geom.freey)
+          // let diagrammrect = CGRect.init(x: rect.origin.x + Geom.offsetx, y: rect.origin.y + Geom.offsety, width: rect.size.width - Geom.offsetx - Geom.freex , height: rect.size.height - Geom.offsety - Geom.freey)
+      
+      let diagrammrect = CGRect.init(x: rect.origin.x + Geom.offsetx, y: rect.origin.y + Geom.offsety  + Geom.offsety, width: rect.size.width - Geom.offsetx - Geom.freex  - Geom.randrechts  -  Geom.randlinks, height: rect.size.height - Geom.offsety - Geom.freey  - Geom.randoben - Geom.randunten)
       return diagrammrect
    }
    
    func drawDiagrammInContext(context: CGContext?)
    {
       context!.setLineWidth(0.6)
-      let diagrammRect = PlotRect()
+      //let diagrammRect = PlotRect()
       let randfarbe =  CGColor.init(red:1.0,green: 0.0, blue: 0.0,alpha:1.0)
       let feldfarbe = CGColor.init(red:0.8,green: 0.8, blue: 0.0,alpha:1.0)
       let linienfarbe = CGColor.init(red:0.0,green: 0.0, blue: 1.0,alpha:1.0)
      
-      drawDiagrammRect(rect: diagrammRect, inContext: context,
-                     
+      drawDiagrammRect(rect: diagrammfeld, inContext: context,
                borderColor: randfarbe,
                fillColor: feldfarbe)
    
@@ -578,152 +703,43 @@ extension DataPlot
       layer?.backgroundColor = color.cgColor
    }
 
-   /*
-    - (void)drawRect:(CGRect)rect // von HomeCentral
-    {
-    // Drawing code
-    NSLog(@"drawRect bounds w: %.1f\t h: %.1f" ,self.bounds.size.width,self.bounds.size.height);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    //CGContextTranslateCTM (context,10,0);
-    
-    CGContextSetLineWidth(context, 0.6);
-    CGContextSetStrokeColorWithColor(context, [[UIColor lightGrayColor] CGColor]);
-    // How many lines?
-    int howMany = (kDefaultGraphWidth - kOffsetX) / kStepX;
-    // Here the lines go
-    for (int i = 0; i < howMany; i++)
-    {
-    CGContextMoveToPoint(context, kOffsetX + i * kStepX, kGraphTop);
-    CGContextAddLineToPoint(context, kOffsetX + i * kStepX, kGraphBottom);
-    }
-    int howManyHorizontal = (kGraphBottom - kGraphTop - kOffsetY) / kStepY;
-    for (int i = 0; i <= howManyHorizontal; i++)
-    {
-    CGContextMoveToPoint(context, kOffsetX, kGraphBottom - kOffsetY - i * kStepY);
-    CGContextAddLineToPoint(context, kDefaultGraphWidth, kGraphBottom - kOffsetY - i * kStepY);
-    }
-    
-    CGContextStrokePath(context);
-    /*
-    void CGContextShowText (
-    CGContextRef c,
-    const char *string,
-    size_t length
-    */
-    
-    CGContextRef xcontext = UIGraphicsGetCurrentContext();
-    //CGContextSelectFont(xcontext, "Helvetica", 14, kCGEncodingMacRoman);
-    CGContextSetTextDrawingMode(xcontext, kCGTextFill);
-    
-    
-    //CGContextTranslateCTM (xcontext,10,0);
-    CGContextMoveToPoint(xcontext,kOffsetX,kOffsetY);
-    //CGContextAddLineToPoint(xcontext, kOffsetX +10, kOffsetY+20);
-    CGContextSetTextMatrix (xcontext, CGAffineTransformMake(1.0, 0.0, 0.0, -1.0, 0.0, 0.0));
-    
-    
-    //   char* x_achse = "0 1 2 3\0";
-    //NSLog(@"%s l: %zd",x_achse,strlen(x_achse));
-    //CGContextShowTextAtPoint(xcontext,kOffsetX +10,kOffsetY+20,x_achse,strlen(x_achse));
-    CGContextStrokePath(xcontext);
-    
-    //NSLog(@"drawrect self.datadic: %@",[self.datadic description]);
-    if ([self.datadic objectForKey:@"linearray"])
-    {
-    
-    //CGContextRef linecontext = UIGraphicsGetCurrentContext();
-    
-    //CGContextTranslateCTM (context,10,10);
-    
-    NSArray* tempLineArray = [self.datadic objectForKey:@"linearray"];
-    //     NSLog(@"tempLineArray da: %@",[[self.datadic objectForKey:@"linearray"] description]);
-    if (tempLineArray.count)
-    {
-    for (int i=0;i< tempLineArray.count;i++)
-    {
-    //NSLog(@"Linie %d",i);
-    
-    if ([[tempLineArray objectAtIndex:i]count])
-    {
-    //NSLog(@"tempLineArray objectAtIndex: %d da: %@",i,[[tempLineArray objectAtIndex:i] description]);
-    // contextref anlegen
-    CGContextRef templinecontext = UIGraphicsGetCurrentContext();
-    //CGContextTranslateCTM (templinecontext,10,0);
-    //CGContextSetTextMatrix (templinecontext, CGAffineTransformMake(1.0, 0.0, 0.0, -1.0, 0.0, 0.0));
-    
-    CGContextSetLineWidth(templinecontext, 0.6);
-    NSDictionary* tempLineDic = [tempLineArray objectAtIndex:i];
-    if ([tempLineDic objectForKey:@"linecolor"])
-    {
-    CGContextSetStrokeColorWithColor(templinecontext, [[UIColor redColor] CGColor]);
-    //CGContextSetStrokeColorWithColor(templinecontext, [[tempLineDic objectForKey:@"linecolor"] CGColor]);
-    }
-    else
-    {
-    CGContextSetStrokeColorWithColor(templinecontext, [[UIColor lightGrayColor] CGColor]);
-    }
-    NSArray* tempDataArray = [tempLineDic objectForKey:@"dataarray"];
-    //NSLog(@"tempDataArray an Index: %d da: %@",i,[tempDataArray  description]);
-    float startx = [[[tempDataArray objectAtIndex:0]objectForKey:@"x"]floatValue];
-    float starty = self.bounds.size.height-[[[tempDataArray objectAtIndex:0]objectForKey:@"y"]floatValue];
-    
-    CGContextMoveToPoint(templinecontext,startx,starty);
-    NSLog(@"x: %.1f \t y: %.1f",startx,starty);
-    starty = self.bounds.size.height-starty;
-    for (int index=1;index < [tempDataArray count];index++)
-    {
-    float x = [[[tempDataArray objectAtIndex:index]objectForKey:@"x"]floatValue];
-    float y = self.bounds.size.height-[[[tempDataArray objectAtIndex:index]objectForKey:@"y"]floatValue];
-    
-    NSLog(@"x: %.1f \t y: %.1f",x,y);
-    CGContextAddLineToPoint(templinecontext,x,y);
-    
-    }// for index
-    CGContextStrokePath(templinecontext);
-    } //if count
-    
-    }// for i
-    }// if count
-    }// if linearray
-    }
- */
-
+ 
 }
 
 class Abszisse: DataPlot
 {
-   fileprivate struct absz
+   fileprivate struct abszvorgaben
    {
-      static let randunten: CGFloat = 15.0
+      static let legendebreite: CGFloat = 10.0
+      static let exponent: Int = 1 // Zehnerpotenz fuer label
    }
 
-   fileprivate struct   Geom
-   {
-      // Abstand von bounds
-      static let randunten: CGFloat = 25.0
-      static let randlinks: CGFloat = 15.0
-      static let randoben: CGFloat = 10.0
-      static let randrechts: CGFloat = 0.0
-      // Abstand vom Feldrand
-      static let offsetx: CGFloat = 0.0 // Offset des Nullpunkts
-      static let offsety: CGFloat = 15.0
-      static let freey: CGFloat = 20.0 // Freier Raum oben
-      static let freex: CGFloat = 15.0 // Freier Raum rechts
-      
-   }
 
    required init(coder aDecoder: NSCoder)
    {
-      Swift.print("abszisse init coder")
+      //Swift.print("abszisse init coder")
       super.init(coder: aDecoder)
+      diagrammfeld = DiagrammRect(rect:self.bounds)
+      //diagrammfeld = PlotRect()
    }
 
-
-   override func abszisse(rect: CGRect)->CGPath
+   override func PlotRect() -> CGRect
+   {
+      Swift.print("abszisse PlotRect bounds: \(bounds)")
+      let breite = bounds.size.width // -  Geom.randlinks - Geom.randrechts
+      let hoehe = bounds.size.height - Geom.randoben - Geom.randunten
+      let rect = CGRect(x:0 ,
+                        y: Geom.randunten ,
+                        width: breite, height: hoehe)
+      Swift.print("abszisse PlotRect rect: \(rect)")
+      return rect
+   }
+ 
+   func abszisse(rect: CGRect)->CGPath
    {
       let path = CGMutablePath()
       
-      let abszissex = rect.origin.x + rect.size.width
+      let abszissex = rect.origin.x + rect.size.width - abszvorgaben.legendebreite
       let bigmark = CGFloat(6)
       let submark = CGFloat(3)
       
@@ -738,23 +754,29 @@ class Abszisse: DataPlot
       let markdistanz = rect.size.height / (CGFloat(Vorgaben.MajorTeileY ) )
       let subdistanz = CGFloat(markdistanz) / CGFloat(Vorgaben.MinorTeileY)
       var posy = rect.origin.y
+      let deznummer = NSDecimalNumber(decimal:pow(10,abszvorgaben.exponent)).intValue
+
       for pos in 0...(Vorgaben.MajorTeileY - 1)
       {
          path.addLine(to: CGPoint(x:abszissex - bigmark, y: posy))
          
-         // Wert
-         let p = path.currentPoint
-         let wert = pos
-         let tempWertString = String(format: "%d",  wert)
-         //Swift.print("p: \(p) tempWertString: \(tempWertString)")
-         let paragraphStyle = NSMutableParagraphStyle()
-         paragraphStyle.alignment = .right
-         let attrs = [NSFontAttributeName: NSFont(name: "HelveticaNeue-Thin", size: 8)!, NSParagraphStyleAttributeName: paragraphStyle]
-         
-         tempWertString.draw(with: CGRect(x: p.x - 12 , y: p.y - 5, width: 10, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
+         if (( pos % Vorgaben.rastervertikal ) == 0)
+         {
+            // Wert
+            let p = path.currentPoint
+            let zehnerpotenz = pow(10,abszvorgaben.exponent)
+            let wert = pos * deznummer
+            let tempWertString = String(format: "%d",  wert)
+            //Swift.print("p: \(p) tempWertString: \(tempWertString)")
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .right
+            let attrs = [NSFontAttributeName: NSFont(name: "HelveticaNeue-Thin", size: 8)!, NSParagraphStyleAttributeName: paragraphStyle]
+            
+            tempWertString.draw(with: CGRect(x: p.x - 42 , y: p.y - 5, width: 40, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
+         }
          
          var subposy = posy // aktuelle Position
-         for sub in 1..<(Vorgaben.MinorTeileY)
+         for _ in 1..<(Vorgaben.MinorTeileY)
          {
             subposy += subdistanz
             path.move(to: CGPoint(x:  abszissex, y: subposy ))
@@ -769,15 +791,16 @@ class Abszisse: DataPlot
       }
       path.addLine(to: CGPoint(x:abszissex - bigmark, y: posy))
       // Wert
+      
       let p = path.currentPoint
-      let wert = Vorgaben.MajorTeileY
+      let wert = Vorgaben.MajorTeileY * deznummer
       let tempWertString = String(format: "%d",  wert)
       //Swift.print("p: \(p) tempWertString: \(tempWertString)")
       let paragraphStyle = NSMutableParagraphStyle()
       paragraphStyle.alignment = .right
       let attrs = [NSFontAttributeName: NSFont(name: "HelveticaNeue-Thin", size: 8)!, NSParagraphStyleAttributeName: paragraphStyle]
       
-      tempWertString.draw(with: CGRect(x: p.x - 12 , y: p.y - 5, width: 10, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
+      tempWertString.draw(with: CGRect(x: p.x - 42 , y: p.y - 5, width: 40, height: 14), options: .usesLineFragmentOrigin, attributes: attrs, context: nil)
       
       
       return path
@@ -788,6 +811,22 @@ class Abszisse: DataPlot
 
 extension Abszisse
 {
+   
+   override    func DiagrammRect(rect: CGRect) -> CGRect
+   {
+      // let diagrammrect = CGRect.init(x: rect.origin.x + Geom.offsetx, y: rect.origin.y + Geom.offsety, width: rect.size.width - Geom.offsetx - Geom.freex , height: rect.size.height - Geom.offsety - Geom.freey)
+      
+      let diagrammrect = CGRect.init(x: rect.origin.x +  rect.size.width  , y: rect.origin.y + Geom.offsety + Geom.randunten, width: rect.size.width  , height: rect.size.height - Geom.offsety - Geom.freey)
+      return diagrammrect
+   }
+   
+   
+   override func DiagrammFeld() -> CGRect
+   {
+      return diagrammfeld
+   }
+   
+
    override func drawDiagrammRect(rect: CGRect, inContext context: CGContext?,
                          borderColor: CGColor, fillColor: CGColor)
    {
@@ -824,12 +863,12 @@ extension Abszisse
       // 4
       //     context?.addPath(path)
       // context?.drawPath(using: .fillStroke)
-      let achsenpath = achsen(rect:diagrammfeld)
-      context?.addPath(achsenpath)
+      //let achsenpath = achsen(rect:diagrammfeld)
+      //context?.addPath(achsenpath)
       let abszissebreite = CGFloat(10.0)
       var abszisserect = diagrammfeld
       abszisserect.size.width = abszissebreite
-      abszisserect.origin.x -= abszissebreite
+      abszisserect.origin.x -= 1
       let abszissefarbe = CGColor.init(red:0.0,green:0.5, blue: 0.5,alpha:1.0)
       
       
