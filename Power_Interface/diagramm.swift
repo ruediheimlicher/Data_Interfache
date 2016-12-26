@@ -121,7 +121,7 @@ static let minorrasterhorizontal = 10
    }
 
    
-   open func setWerteArray(werteArray:[Double])
+   open func setWerteArray(werteArray:[Float])
    {
  //     Swift.print("")
       let AnzeigeFaktor:CGFloat = 1.0//= maxSortenwert/maxAnzeigewert;
