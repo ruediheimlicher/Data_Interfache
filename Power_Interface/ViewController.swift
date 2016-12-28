@@ -9,7 +9,7 @@
 import Cocoa
 import AVFoundation
 import Darwin
-
+import AudioToolbox
 
 let TEENSYPRESENT   =   7
 
@@ -71,10 +71,9 @@ let LOGGER_DATA    =  0xB1 // Setzen der Settings fuer die Messungen
 let USB_STOP    = 0xAA
 
 
-class ViewController: NSViewController, NSWindowDelegate
+class ViewController: NSViewController, NSWindowDelegate, AVAudioPlayerDelegate
 {
 //   let meineNotification = Notification.Name(rawValue:"newLoggerDataAktion")
-   
    
    // var  myUSBController:USBController
    // var usbzugang:
@@ -90,7 +89,7 @@ class ViewController: NSViewController, NSWindowDelegate
    
    var loggerDataArray:[[UInt8]] = [[]]
    
-   
+    var audioPlayer = AVAudioPlayer()
    
    //var data = datadiagramm()
    
@@ -104,6 +103,7 @@ class ViewController: NSViewController, NSWindowDelegate
   
    var spistatus:UInt8 = 0;
    var DiagrammFeld:CGRect = CGRect.zero
+   
  //  @IBOutlet  var loggerdiagramm: datadiagramm!
    
    @IBOutlet  var datagraph: DataPlot!
@@ -247,27 +247,25 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[TAKT_LO_BYTE] = UInt8(intervallwert & 0x00FF)
       teensy.write_byteArray[TAKT_HI_BYTE] = UInt8((intervallwert & 0xFF00)>>8)
       //    print("reportTaskIntervall teensy.write_byteArray[TAKT_LO_BYTE]: \(teensy.write_byteArray[TAKT_LO_BYTE])")
+      // Abschnitt auf SD
+      teensy.write_byteArray[ABSCHNITT_BYTE] = 0
+      
+      
+      //Angabe zum  Startblock lesen. default ist 0
+      let startblock = write_sd_startblock.integerValue
+      teensy.write_byteArray[BLOCKOFFSETLO_BYTE] = UInt8(startblock & 0x00FF) // Startblock
+      teensy.write_byteArray[BLOCKOFFSETHI_BYTE] = UInt8((startblock & 0xFF00)>>8)
 
       
       var senderfolg = teensy.start_write_USB()
-      
+      if (senderfolg > 0)
+      {
+         NSSound(named: "Glass")?.play()
+      }
 
-      var toppings =
-         ["Pepperoni":0.25,
-          "Sausage":0.26,
-          "Onions":0.02,
-          "Green Peppers":0.03,
-          "Cheese":0.01
-      ]
-      
-      //let items : Array<String> = (swiftArray as AnyObject).valueForKeyPath("name") as! Array<String>
-
-      //let items : Array<String> = (swiftArray as AnyObject).value(forKeyPath:"task") as! Array<String>
-   
-   //print("item: \(items)")
       
    }
- 
+
    
    @IBAction func reportTaskIntervall(_ sender: NSComboBox)
    {
@@ -291,7 +289,6 @@ class ViewController: NSViewController, NSWindowDelegate
       teensy.write_byteArray[TAKT_LO_BYTE] = UInt8(integerwahl! & 0x00FF)
       teensy.write_byteArray[TAKT_HI_BYTE] = UInt8((integerwahl! & 0xFF00)>>8)
      //    print("reportTaskIntervall teensy.write_byteArray[TAKT_LO_BYTE]: \(teensy.write_byteArray[TAKT_LO_BYTE])")
- 
       }
    }
    
@@ -347,21 +344,55 @@ class ViewController: NSViewController, NSWindowDelegate
          print("start_messung stop")
          teensy.write_byteArray[0] = UInt8(MESSUNG_STOP)
          teensy.write_byteArray[1] = UInt8(SAVE_SD_STOP)
-         print("DiagrammDataArray: \(DiagrammDataArray)")
-         let messungArray = MessungDataStringArray(data:DiagrammDataArray)
-         print("datastring: \(messungArray)")
          
+         teensy.read_OK = false
+         usb_read_cont = false
+         cont_read_check.state = 0;
+
+         print("DiagrammDataArray: \(DiagrammDataArray)")
+        
+         let messungstring:String = MessungDataString(data:DiagrammDataArray)
+         
+         let prefix = datumprefix()
+         let dataname = prefix + "_messungdump.txt"
+         
+         writeData(name: dataname,data:messungstring)
+
+      //   let MessungDataString = DiagrammDataArray.map{String($0)}.joined(separator: "\n")
+         /*
+         print("messungstring: \(messungstring)\n")
+         let erfolg = saveData(data: messungstring)
+         if (erfolg == 0)
+         {
+         print("MessData sichern OK")
+            NSSound(named: "Glass")?.play()
+         }
+         else
+         {
+            print("MessData sichern misslungen")
+
+         }
+ */
       }
       
       var senderfolg = teensy.start_write_USB()
-      
+      if (senderfolg > 0)
+      {
+         NSSound(named: "Glass")?.play()
+      }
       
    }
-
    
    // nicht verwendet, in start/stop Messung verschoben
    @IBAction func report_stop_messung(_ sender: AnyObject)
    {
+      print("start_messung stop")
+      teensy.write_byteArray[0] = UInt8(MESSUNG_STOP)
+      teensy.write_byteArray[1] = UInt8(SAVE_SD_STOP)
+      print("DiagrammDataArray: \(DiagrammDataArray)")
+      let messungArray = MessungDataStringArray(data:DiagrammDataArray)
+      print("datastring: \(messungArray)")
+      var senderfolg = teensy.start_write_USB()
    }
 
    
@@ -390,8 +421,37 @@ class ViewController: NSViewController, NSWindowDelegate
       return datastringarray
    }
    
+   
+   func MessungDataString(data:[[Float]])-> String
+   {
+      var datastring:String = ""
+      var datastringarray:[String] = []
+      print("setMessungData: \(data)")
+      for index in 0..<data.count
+      {
+         let tempzeilenarray:[Float] = data[index]
+         if (tempzeilenarray.count > 0)
+         {
+            
+            let tempzeilenstring = tempzeilenarray.map{String($0)}.joined(separator: "\t")
+            datastringarray.append(tempzeilenstring)
+            datastring = datastring +  "\n" + tempzeilenstring
+         }
+      }
+      let prefix = datumprefix()
+      let dataname = prefix + "_messungdump.txt"
+      
+//      writeData(name: dataname,data:datastring)
+      
+      
+      return datastring
+   }
+
+   
    @IBAction func report_cont_write(_ sender: AnyObject)
    {
+      NSSound(named: "Glass")?.play()
+      
       if (sender.state == 0)
       {
          usb_write_cont = false
@@ -406,6 +466,10 @@ class ViewController: NSViewController, NSWindowDelegate
    
    @IBAction func report_cont_read(_ sender: AnyObject)
    {
+      //audioPlayer.play()
+      NSSound(named: "Glass")?.play()
+      let systemSoundID: SystemSoundID = 1016
+      AudioServicesPlaySystemSound (systemSoundID)
       if (sender.state == 0)
       {
          usb_read_cont = false
@@ -572,6 +636,134 @@ class ViewController: NSViewController, NSWindowDelegate
    }
    
    
+   
+   @IBAction func SaveResBut(sender: AnyObject)
+   {
+      // https://eclecticlight.co/2016/12/23/more-fun-scripting-with-swift-and-xcode-alerts-and-file-save/
+      let fileContentToWrite = inputDataFeld.string
+      //and so on to build the text to be written out to the file
+      let FS = NSSavePanel()
+      FS.canCreateDirectories = true
+      FS.allowedFileTypes = ["txt"]
+      //which should also allow “txt”
+      FS.begin { result in
+         if result == NSFileHandlingPanelOKButton {
+            guard let url = FS.url else { return }
+            do {
+               try fileContentToWrite?.write(to: url, atomically: false, encoding: String.Encoding.utf8)
+            } catch {
+               print (error.localizedDescription)
+               //we should really have an error alert here instead
+            }
+         }
+      }
+   }
+   
+   @IBAction func saveData(sender : AnyObject)
+   {
+      print("saveData")
+      // get the values from the name and data fields
+      let docData = inputDataFeld.string!
+      
+      // create a dictionary with the values
+      
+      // create a Save Panel to choose a file path to save to
+      let dlg = NSSavePanel()
+      // use the name fields value to suggest a name for the file
+      let prefix = datumprefix()
+      let docName = prefix + "_messung.txt"
+      let doc = ["name" : docName, "data" : docData]
+      dlg.nameFieldStringValue = docName
+      // run the Save Panel and handle an OK selection
+      if (dlg.runModal() == NSFileHandlingPanelOKButton)
+      {
+         // get the URL of the selected file path
+         let saveUrl = dlg.url
+         
+         // archive the dictionary and save to the file path
+         let fileUrlWithExt = saveUrl?.appendingPathExtension("txt")
+         NSKeyedArchiver.archiveRootObject(doc, toFile: fileUrlWithExt!.path)
+      }
+   }
+   
+   open func saveData( data:String)->Int
+   {
+      //var saveURL: url?
+      // create a Save Panel to choose a file path to save to
+      let dlg:NSSavePanel = NSSavePanel()
+      dlg.title = "Messung sichern"
+      // use the name fields value to suggest a name for the file
+      let prefix = datumprefix()
+      let docName = prefix + "_messung.txt"
+      let doc = ["name" : docName, "data" : data]
+      dlg.nameFieldStringValue = docName
+      // run the Save Panel and handle an OK selection
+      if (dlg.runModal() == NSFileHandlingPanelOKButton)
+      {
+         // get the URL of the selected file path
+         var saveURL = dlg.url
+         dlg.orderOut(nil)
+         //http://stackoverflow.com/questions/24097826/read-and-write-data-from-text-file
+         // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
+         print ("saveURL: \(saveURL)")
+         
+         // get the URL of the selected file path
+         dlg.orderOut(nil)
+         
+      }
+      return 0
+      /*
+         // archive the dictionary and save to the file path
+         let fileUrlWithExt = saveUrl?.appendingPathExtension("txt")
+         NSKeyedArchiver.archiveRootObject(doc, toFile: fileUrlWithExt!.path)
+     */
+         //datapfad = datapfad.appendingPathComponent(name)
+         
+         //writing
+         /*
+         do
+         {
+            try data.write(to: saveURL! , atomically: false, encoding: String.Encoding.utf8)
+            return 0
+         }
+         catch let error as NSError
+         {
+            print("saveData Error \(error.localizedDescription)");
+            return 1
+         }
+          */
+         return 0
+      }
+      
+      
+      
+   @IBAction func browseFile(sender: AnyObject)
+   {
+      //https://denbeke.be/blog/programming/swift-open-file-dialog-with-nsopenpanel/
+      let dialog = NSOpenPanel();
+      
+      dialog.title                   = "Choose a .txt file";
+      dialog.allowedFileTypes        = ["txt"];
+      
+      if (dialog.runModal() == NSModalResponseOK)
+      {
+         let result = dialog.url // Pathname of the file
+         
+         if (result != nil) {
+            let path = result!.path
+            print("browseFile path: \(path)")
+            //filename_field.stringValue = path
+         }
+      } else {
+         // User clicked on "Cancel"
+         return
+      }
+      
+   }
+      
+
+   
+   
    open func writeData(name:String, data:String)
    {
       /*
@@ -610,11 +802,11 @@ class ViewController: NSViewController, NSWindowDelegate
          
          datapfad = datapfad.appendingPathComponent(name)
          
-            //writing
-            do
-            {
-               try data.write(to: datapfad, atomically: false, encoding: String.Encoding.utf8)
-            }
+         //writing
+         do
+         {
+            try data.write(to: datapfad, atomically: false, encoding: String.Encoding.utf8)
+         }
          catch let error as NSError
          {
             print(error.localizedDescription);
@@ -651,6 +843,8 @@ class ViewController: NSViewController, NSWindowDelegate
          
       }
    } // writeData
+   
+   
    
    
    func tagsekunde()-> Int
@@ -723,6 +917,29 @@ class ViewController: NSViewController, NSWindowDelegate
    {
       super.viewDidLoad()
       
+      let systemSoundID: SystemSoundID = 1016
+      
+      // to play sound
+      AudioServicesPlaySystemSound (systemSoundID)
+      //var ton = NSURL(fileURLWithPath: Bundle.main.path(forResource:"beep", ofType: "wav")!)
+      
+      var laut = NSURL(fileURLWithPath: Bundle.main.path(forResource:"pling", ofType:"caf")!)
+      
+      var error:NSError?
+      
+      do
+      {
+      try audioPlayer = AVAudioPlayer(contentsOf: laut as URL)
+      }
+   catch let error as NSError
+   {
+   print(error.localizedDescription);
+   }
+
+   
+   
+      audioPlayer.prepareToPlay()
+      
       NotificationCenter.default.addObserver(self, selector: #selector(ViewController.USBfertigAktion(_:)), name: NSNotification.Name(rawValue: "NSWindowWillCloseNotification"), object: nil)
       
       // http://dev.iachieved.it/iachievedit/notifications-and-userinfo-with-swift-3-0/
@@ -733,8 +950,10 @@ class ViewController: NSViewController, NSWindowDelegate
                      object:nil, queue:nil,
                      using:newLoggerDataAktion)
       var deg=0.0;
-      while deg<50
+      while deg<5
       {
+         
+     
          let winkel = M_PI * 2.0 * deg / 360.0
          let sinus1 = sin(M_PI * 2.0 * deg / 240.0)
          let sinus2 = sin((M_PI * 2.0 * deg / 180.0 ) * 13)
@@ -884,6 +1103,8 @@ class ViewController: NSViewController, NSWindowDelegate
       self.dataAbszisse.setDiagrammFeldHeight(h: self.datagraph.DiagrammFeldHeight())
 
       //dataAbszisse.drawBackground = false
+      NSBeep()
+
    }
    // ****************************************************************************
       //MARK: -   newLoggerDataAktion
@@ -1675,7 +1896,7 @@ class ViewController: NSViewController, NSWindowDelegate
       let erfolg = UInt8(teensy.USBOpen())
       usbstatus = erfolg
       print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
-      
+ //     saveData()
       if (rawhid_status()==1)
       {
         // NSBeep()
@@ -1689,6 +1910,7 @@ class ViewController: NSViewController, NSWindowDelegate
          stop_read_USB_Knopf.isEnabled = true;
          start_write_USB_Knopf.isEnabled = true;
          stop_write_USB_Knopf.isEnabled = true;
+         NSSound(named: "Glass")?.play()
          
       }
       else
@@ -1702,7 +1924,6 @@ class ViewController: NSViewController, NSWindowDelegate
          stop_read_USB_Knopf.isEnabled = false;
          start_write_USB_Knopf.isEnabled = false;
          stop_write_USB_Knopf.isEnabled = false;
-
       }
       print("antwort: \(teensy.status())")
       
