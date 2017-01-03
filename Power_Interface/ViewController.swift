@@ -351,8 +351,11 @@ class ViewController: NSViewController, NSWindowDelegate, AVAudioPlayerDelegate
 
          print("DiagrammDataArray: \(DiagrammDataArray)")
         
-         let messungstring:String = MessungDataString(data:DiagrammDataArray)
-         
+         var messungstring:String = MessungDataString(data:DiagrammDataArray)
+         if (messungstring.characters.count == 0)
+         {
+            messungstring = "empty string"
+         }
          let prefix = datumprefix()
          let dataname = prefix + "_messungdump.txt"
          
@@ -702,13 +705,11 @@ class ViewController: NSViewController, NSWindowDelegate, AVAudioPlayerDelegate
       {
          // get the URL of the selected file path
          var saveURL = dlg.url
-         dlg.orderOut(nil)
          //http://stackoverflow.com/questions/24097826/read-and-write-data-from-text-file
          // http://www.techotopia.com/index.php/Working_with_Directories_in_Swift_on_iOS_8
          print ("saveURL: \(saveURL)")
          
          // get the URL of the selected file path
-         dlg.orderOut(nil)
          
       }
       return 0
@@ -1896,7 +1897,9 @@ class ViewController: NSViewController, NSWindowDelegate, AVAudioPlayerDelegate
       let erfolg = UInt8(teensy.USBOpen())
       usbstatus = erfolg
       print("USBOpen erfolg: \(erfolg) usbstatus: \(usbstatus)")
- //     saveData()
+     // let saveerr = saveData(data: "abc")
+      
+      
       if (rawhid_status()==1)
       {
         // NSBeep()
